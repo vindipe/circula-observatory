@@ -51,10 +51,18 @@ export function home(params: URLSearchParams, stats: Overview | null, broken = f
       + '<span class="sample-number">' + number(item.last_value, true) + ' <small>' + esc(item.unit) + '</small></span>'
       + '<time datetime="' + esc(item.last_day) + '">' + esc(time(item.last_day)) + '</time>', 'sample')
   }).join('')
+  const questions = [
+    ['ledger', 'How much history was added?', 'Bitcoin block bytes', '/research?study=ledger#study-questions', 'accumulate'],
+    ['spending', 'When does older value move again?', 'Bitcoin outputs at spending', '/research?study=dormancy#study-questions', 'circulate'],
+    ['expiry', 'What changes when entries expire?', 'Policy simulation', '/research?mode=lab#policy-lab', 'expire'],
+  ].map(([id, question, scope, route, glyph]) => link(route,
+    '<span class="home-study-symbol" aria-hidden="true">' + icon(glyph, 24) + '</span><span><small>' + esc(scope)
+    + '</small><strong>' + esc(question) + '</strong></span>' + icon('arrow', 17), 'home-study home-study-' + id)).join('')
   return '<section class="hero"><div class="hero-copy"><p class="kicker"><span class="signal"></span> Open research observatory</p>'
     + '<h1 tabindex="-1">What can we observe<br class="hero-break"> without expiry<span>?</span></h1><p class="hero-tagline">' + en.tagline + '</p>'
-    + '<div class="hero-actions">' + button('/research', 'Explore the study', true) + button('/explorer', 'Explore the data', false, 'diagonal') + '</div>'
+    + '<div class="hero-actions">' + button('/research', 'Start the study', true) + button('/explorer', 'Browse the archive', false, 'diagonal') + '</div>'
     + '</div><figure id="concept" class="concept">' + homeVisual(active) + '</figure></section>'
+    + '<section class="home-studies" aria-labelledby="home-study-title"><h2 id="home-study-title">Start with a question</h2><div>' + questions + '</div></section>'
     + '<section class="perspectives" aria-label="Four perspectives"><div class="section-lead"><div><p class="kicker">Perspectives</p>'
     + '<h2>Follow the resource lifecycle</h2></div><div id="lens-link">' + link(path('/explorer', { perspective: active }),
       'Explore ' + lens[active].title.toLowerCase() + ' ' + icon('arrow', 16), 'text-link') + '</div></div>'
@@ -243,6 +251,11 @@ export function methods() {
     + '<article><h3>Ledger and disk</h3><p>Block counts, recorded transactions and head heights describe ledger data. Physical node storage depends on the client, database, indexing and retention configuration.</p></article>'
     + '<article><h3>Validity and retention</h3><p>TTL is a validity rule. Inactivity, burn, spending, pruning and archive movements each require their own evidence. Stellar measurements cover specified live contract entries.</p></article>'
     + '<article><h3>Traditional systems</h3><p>Wikimedia page views use one documented method across three services. They provide a web-traffic comparison within that cohort. Blockchain event counts are shown on their own axes.</p></article>'
+    + '</div></section><section class="methods-section"><div class="section-lead"><h2>Research snapshots</h2></div><div class="panel api-panel">'
+    + '<p>Research includes a fixed Bitcoin block sample, two series from Open Bitcoin Metrics v0.1.0 and a daily USDC snapshot from Coin Metrics Community. Each view links to its source and offers a CSV for the selected range and a versioned JSON snapshot.</p>'
+    + '<p>The Policy lab uses a fixed synthetic workload and documents its event order. Its results stay within the experiment.</p>'
+    + '<div class="row">' + link('/research', 'Open the research views', 'text-link')
+    + ext('https://github.com/vindipe/circula-observatory/blob/main/docs/research-design.md', 'Research methods and reconstruction') + '</div>'
     + '</div></section><section class="methods-section"><div class="section-lead"><h2>Source register</h2></div><div class="sources-grid">'
     + sourceCards + '</div></section><section class="methods-section"><div class="section-lead"><h2>Metric definitions</h2></div><div class="panel">'
     + definitions + '</div></section><section class="methods-section"><div class="section-lead"><h2>Download and API</h2></div><div class="panel api-panel">'

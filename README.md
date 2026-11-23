@@ -57,6 +57,8 @@ This returns HTTP 202 for an accepted attempt. Check the status endpoint for its
 
 Production collection is paused via `COLLECTION_PAUSED=true` and an empty `triggers.crons` array in `wrangler.jsonc`. The application guard skips scheduled and authenticated manual jobs before they access D1. The public archive and Research view remain available.
 
+Research serves fixed snapshots from `public/research-data/`. To reconstruct them, run `python3 scripts/prepare-research-data.py all` with Python 3.11 or later. The script validates the release checksum, date coverage and Bitcoin block lineage before writing assets. It uses `.cache/research-inputs/` to keep source files between attempts. Review the resulting rows and provenance before publishing. See the [research methods](docs/research-design.md) for the definition and license of each file.
+
 Before resuming collection, review D1's Row Metrics and distinguish account-wide reads from writes. Successful collector logs include `batch_rows_read` and `batch_rows_written` for the D1 archive batch and `observations` for points received. Spread historical imports across available quota and reserve headroom for public reads. Set an appropriate cron cadence and remove the pause flag in the same deploy. Check the first scheduled runs and the database's daily quota after resuming.
 
 Coin Metrics and Wikimedia refresh daily with a seven-day revision lookback. EVM and Solana snapshot collectors run daily. Stellar samples every six hours, retaining the last accepted snapshot per UTC day. EVM and Coin Metrics metadata refresh approximately weekly. Coin Metrics metadata scans resume by cursor on successive runs.

@@ -4,7 +4,7 @@ import type { Kind, Perspective } from '../shared/model'
 // definitions in shared/metrics and recorded entity names retain their origin.
 export const en = {
   nav: [['/', 'Overview'], ['/research', 'Research'], ['/explorer', 'Explorer'], ['/compare', 'Compare'], ['/methods', 'Methods & data'], ['/status', 'Data status']],
-  researchQuestion: 'When blockchain resources have no expiry rule, what can we observe?',
+  researchQuestion: 'What can we observe without expiry?',
   tagline: 'Follow blockchain resources to see how persistence relates to accumulation, inactivity, holdings and infrastructure.',
   network: 'Networks',
   asset: 'Assets',

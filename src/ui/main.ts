@@ -9,7 +9,6 @@ import { en, lens } from './copy'
 import { empty, esc, heading, link, path } from './html'
 import { button, compare, detail, explorer, home, homeVisual, methods, shell, status } from './views'
 import { icon } from './art'
-import { research } from './research'
 
 const app = document.querySelector<HTMLElement>('#app')!
 let controller: AbortController
@@ -61,13 +60,17 @@ async function render(focus = false) {
   const loading = '<div class="skeleton page-loading" role="status">Loading observations…</div>'
   root.innerHTML = route === '/' ? home(params, null) : route === '/methods' ? methods() : loading
   let selected: Series | null = null
+  let bindView: ((root: HTMLElement) => void) | undefined
   try {
     let markup = ''
     if (route === '/') {
       const overview = await read<Overview>('/api/v1/overview', signal)
       markup = home(new URLSearchParams(window.location.search), overview)
     } else if (route === '/research') {
-      markup = research(params)
+      const { research } = await import('./research')
+      const view = await research(params, signal)
+      markup = view.markup
+      bindView = 'bind' in view ? view.bind : undefined
     } else if (route === '/explorer') {
       const data = await read<Catalog>(catalogURL(params), signal)
       const chosen = data.items.find(item => item.id === params.get('entity'))
@@ -123,6 +126,7 @@ async function render(focus = false) {
     if (renderId !== sequence) return
     root.innerHTML = markup
     if (selected) bindChart(root, selected)
+    bindView?.(root)
   } catch (error) {
     if (signal.aborted || renderId !== sequence) return
     const message = error instanceof FetchError ? error.message : 'Try again in a moment.'
