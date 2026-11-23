@@ -18,7 +18,7 @@ export function shell(route: string) {
   const nav = en.nav.map(([href, title]) => link(href, esc(title), (route === href ? 'active' : '') + (href === '/status' ? ' status-nav' : ''),
     route === href ? 'aria-current="page"' : '')).join('')
   return '<header class="site-header"><div class="frame header-inner">'
-    + link('/', mark + '<span><strong>CIRCULA</strong><small>OBSERVATORY</small></span>', 'logo', 'aria-label="CIRCULA Observatory home"')
+    + link('/', mark + '<span><strong>CIRCULA</strong> <small>OBSERVATORY</small></span>', 'logo')
     + '<nav aria-label="Main navigation">' + nav + '</nav></div></header>'
     + '<main id="main" class="frame" tabindex="-1"></main>'
     + '<footer class="site-footer"><div class="frame footer-inner"><div class="foot-brand">' + mark
@@ -154,7 +154,7 @@ export function seriesPanel(series: Series, params: URLSearchParams, route: stri
     + '<label class="field"><span>To (UTC)</span><input required type="date" name="to" value="' + esc(window.to) + '"></label>'
     + '<button class="button compact">Apply dates</button></form><nav aria-label="Date zoom" class="zoom row">'
     + [14,30,90].map(d => link(path(route, preserve(clean, { from: daysAgo(d - 1, Date.parse(window.to)), to: window.to })),
-      d + 'd', 'button compact', 'aria-label="Last ' + d + ' days ending on ' + esc(time(window.to)) + '"')).join('') + '</nav></div>'
+      d + 'd', 'button compact', 'aria-label="' + d + 'd, Last ' + d + ' days ending on ' + esc(time(window.to)) + '"')).join('') + '</nav></div>'
     + (series.points.length ? (mode === 'chart' ? chart(series) : pointsTable(series.points, series.entities))
       : empty(en.noData, 'Choose another date range or check the collection status.'))
     + '<div class="series-foot"><div><span class="mono small">' + number(series.points.length) + ' observations'

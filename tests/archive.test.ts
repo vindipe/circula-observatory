@@ -7,7 +7,7 @@ import { metricById } from '../src/shared/metrics'
 import { pointStatements } from '../src/worker/archive'
 import { coinAsset, coinNetwork, putEntities, stellarKeys } from '../src/worker/catalog'
 import { coinPlan, retryDelay } from '../src/worker/collect'
-import { closeTimeFromLedgerPrefix, decodeCoinRows, decodeStellar, validPublicNode } from '../src/worker/sources'
+import { closeTimeFromLedgerPrefix, decodeCoinRows, decodeStellar, upstream, validPublicNode } from '../src/worker/sources'
 
 test('daily ingestion preserves real zeros and skips missing and out-of-window values', () => {
   const points = decodeCoinRows([
@@ -83,4 +83,13 @@ test('archive replay is idempotent, records newer revisions and keeps valid cove
   assert.equal(db.prepare('SELECT revision FROM observations').get()?.revision,2)
   assert.equal(db.prepare('SELECT last_value FROM coverage').get()?.last_value,143)
   db.close()
+})
+
+test('source requests use a Workers-compatible redirect policy and surface redirect responses', async context => {
+  const fetchMock = context.mock.method(globalThis, 'fetch', async (_url: string, init?: RequestInit) => {
+    assert.equal(init?.redirect, 'manual')
+    return new Response(null, { status: 302, headers: { Location: 'https://example.org/elsewhere' } })
+  })
+  await assert.rejects(upstream('https://example.org/data'), /HTTP 302/)
+  assert.equal(fetchMock.mock.callCount(), 1)
 })

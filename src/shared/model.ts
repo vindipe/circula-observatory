@@ -133,5 +133,7 @@ export function compatible(metric: Metric, entities: Entity[], units: string[]) 
   if (entities.length < 2) return true
   if (metric.compare === 'none' || new Set(units).size !== 1) return false
   if (metric.compare === 'cohort') return entities.every(entity => entity.network_id === entities[0].network_id)
-  return entities.every(entity => entity.kind === entities[0].kind)
+  const [first] = entities
+  return entities.every(entity => entity.kind === first.kind
+    && (first.kind !== 'asset' || entity.category === first.category))
 }

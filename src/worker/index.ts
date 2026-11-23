@@ -13,7 +13,7 @@ class ApiError extends Error {
   constructor(readonly status: number, message: string) { super(message) }
 }
 
-const entityId = /^[a-z][a-z0-9-]{0,40}:[a-z0-9_.-]{1,64}$/
+const entityId = /^[a-z][a-z0-9-]{0,40}:[\p{L}\p{N}_.-]{1,64}$/u
 const kinds = ['network', 'asset', 'protocol', 'system'] as const
 const headers = {
   'Access-Control-Allow-Origin': '*',
@@ -108,7 +108,7 @@ async function detail(db: D1Database, id: string) {
     all<Coverage>(db.prepare('SELECT metric_id,unit,first_day,last_day,last_value,observed_at,collected_at FROM coverage WHERE entity_id=? ORDER BY metric_id').bind(id)),
     all<Entity & { label: string }>(db.prepare(`
       SELECT e.*, r.label FROM (
-        SELECT network_id AS id,'Network' AS label FROM entities WHERE id=? AND network_id IS NOT NULL
+        SELECT network_id AS id,CASE WHEN kind='network' THEN 'Parent network' ELSE 'Network' END AS label FROM entities WHERE id=? AND network_id IS NOT NULL
         UNION
         SELECT id,CASE WHEN kind='network' THEN 'Related network' ELSE 'On this network' END FROM entities WHERE network_id=?
         UNION

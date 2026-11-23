@@ -24,15 +24,16 @@ export async function upstream(url: string, payload?: object) {
         method: payload ? 'POST' : 'GET',
         headers,
         body: payload ? JSON.stringify(payload) : undefined,
-        redirect: 'error',
+        redirect: 'manual',
         signal: AbortSignal.timeout(9_000),
       })
-    } catch {
+    } catch (error) {
       if (!attempt) {
         await pause(650)
         continue
       }
-      throw new UpstreamError(origin + ' timed out or could not be reached')
+      const reason = error instanceof Error ? error.name : 'Fetch error'
+      throw new UpstreamError(origin + ' request failed (' + reason + ')')
     }
     if (response.ok) return response
     const retryAfter = response.headers.get('Retry-After')
@@ -75,7 +76,7 @@ export async function coinAvailability() {
   ]))
 }
 
-export const validCoin = (value: string) => typeof value === 'string' && /^[a-z0-9][a-z0-9_.-]{0,63}$/.test(value)
+export const validCoin = (value: string) => typeof value === 'string' && /^[\p{L}\p{N}][\p{L}\p{N}_.-]{0,63}$/u.test(value)
 
 export type CoinTarget = [coin: string, entity: string, unit: string]
 export type CoinRow = { asset: string; time: string } & Record<string, string | null | undefined>

@@ -31,7 +31,7 @@ npm run seed -- --days=54
 npx wrangler d1 execute DB --local --file .cache/bootstrap.sql
 ```
 
-A scheduled handler execution can be exercised locally at `/__scheduled?cron=*+*+*+*+*` when Wrangler starts with the test-scheduled flag. The local fixture only simulates invocation by the Cloudflare scheduler.
+To exercise a collector locally, start Wrangler with a local `INGEST_TOKEN` in `.dev.vars` and use the authenticated manual invocation described below with the loopback URL. The run will be labelled `manual`.
 
 ## Deploy on Cloudflare
 
@@ -56,7 +56,7 @@ This returns HTTP 202 for an accepted attempt. Check the status endpoint for its
 
 Coin Metrics and Wikimedia refresh daily with a seven-day revision lookback. EVM and Solana snapshot collectors run daily. Stellar samples every six hours, retaining the last accepted snapshot per UTC day. EVM and Coin Metrics metadata refresh approximately weekly. Coin Metrics metadata scans resume by cursor on successive runs.
 
-Upstream calls have deadlines and bounded retries. Failed jobs use exponential backoff. An archive record is unique by subject, metric and UTC day. Confirmed updates replace older observations of that day and increment the revision. Measurements stay available during outages. The status view records in-flight collection, per-source lag, failed jobs and recent execution outcomes. Native-unit stocks, labeled flow estimates and physical node measurements each require distinct definitions.
+Upstream calls have deadlines and bounded retries. Failed jobs use exponential backoff. An archive record is unique by subject, metric and UTC day. Confirmed updates replace older observations of that day and increment the revision. Measurements stay available during outages. The status view records collection outcomes, per-source lag, failed jobs and recent execution outcomes. Native-unit stocks, labeled flow estimates and physical node measurements each require distinct definitions.
 
 The design targets the Cloudflare Free limits of 100,000 Worker requests per day and D1 limits of 5 million rows read, 100,000 rows written per day and 500 MB per database. Static illustration and UI requests use Workers Static Assets. There are no paid data dependencies or R2 resources. Check [Workers limits](https://developers.cloudflare.com/workers/platform/limits/) and [D1 pricing](https://developers.cloudflare.com/d1/platform/pricing/) when expanding traffic or retention.
 
