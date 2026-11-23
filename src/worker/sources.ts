@@ -237,10 +237,10 @@ export async function solanaSeries() {
   const params = [{ commitment: 'finalized', excludeNonCirculatingAccountsList: true }]
   let response: Supply
   try {
-    response = await rpc<Supply>('https://api.mainnet-beta.solana.com', 'getSupply', params)
+    response = await rpc<Supply>('https://api.mainnet.solana.com', 'getSupply', params)
   } catch (error) {
     if (!(error instanceof UpstreamError)) throw error
-    response = await rpc<Supply>('https://solana.drpc.org', 'getSupply', params)
+    response = await rpc<Supply>('https://api.mainnet-beta.solana.com', 'getSupply', params)
   }
   const observedAt = new Date().toISOString()
   const slot = response.context?.slot
