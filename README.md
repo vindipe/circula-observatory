@@ -5,6 +5,7 @@ Explore how digital resources accumulate, persist, circulate and expire.
 The Observatory is an independent CIRCULA research prototype. Its public catalog combines EVM networks, Coin Metrics assets, tracked Stellar protocols and selected Wikimedia projects. The Explorer starts with subjects that have recorded observations. The full catalog includes subjects that have only reference metadata.
 
 - [Public Observatory](https://circula-observatory.vincenzopaolo-diperna.workers.dev/)
+- [Research question and interactive study design](docs/research-design.md)
 - [Source selection, scope and data licenses](docs/sources.md)
 - [Public API and downloads](docs/api.md)
 - [Adding a controlled node adapter](docs/node-adapters.md)
@@ -35,7 +36,7 @@ To exercise a collector locally, start Wrangler with a local `INGEST_TOKEN` in `
 
 ## Deploy on Cloudflare
 
-The production project uses a single Worker, Workers Static Assets and one D1 database. Public page or API requests read the archive. A Cron Trigger runs on the backend once a minute and acquires the next due collector with a database lease. The scheduler runs on an empty site and backfills the first 42 days of available daily observations per shard. Initial population takes multiple runs.
+The production project uses a single Worker, Workers Static Assets and one D1 database. Public page or API requests read the archive. When enabled, a Cron Trigger acquires the next due collector with a database lease. The scheduler runs on an empty site and backfills the first 42 days of available daily observations per shard. Initial population takes multiple runs.
 
 1. For a fork, create a dedicated D1 database with `npx wrangler d1 create circula-observatory` and set its returned ID and your desired Worker name in `wrangler.jsonc`. The checked-in ID binds this project's production database.
 2. Sign in via Wrangler or provide the environment variables in [the example](.env.example) through a secret store. The operator needs Worker deployment and D1 write permissions for the selected account.
@@ -53,6 +54,10 @@ curl -fsS -X POST -H "Authorization: Bearer $INGEST_TOKEN" \
 This returns HTTP 202 for an accepted attempt. Check the status endpoint for its actual outcome. The route is disabled without the secret. A running job lease suppresses a concurrent duplicate invocation.
 
 ## Operate the archive
+
+Production collection is paused via `COLLECTION_PAUSED=true` and an empty `triggers.crons` array in `wrangler.jsonc`. The application guard skips scheduled and authenticated manual jobs before they access D1. The public archive and Research view remain available.
+
+Before resuming collection, review D1's Row Metrics and distinguish account-wide reads from writes. Successful collector logs include `batch_rows_read` and `batch_rows_written` for the D1 archive batch and `observations` for points received. Spread historical imports across available quota and reserve headroom for public reads. Set an appropriate cron cadence and remove the pause flag in the same deploy. Check the first scheduled runs and the database's daily quota after resuming.
 
 Coin Metrics and Wikimedia refresh daily with a seven-day revision lookback. EVM and Solana snapshot collectors run daily. Stellar samples every six hours, retaining the last accepted snapshot per UTC day. EVM and Coin Metrics metadata refresh approximately weekly. Coin Metrics metadata scans resume by cursor on successive runs.
 

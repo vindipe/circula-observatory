@@ -9,6 +9,7 @@ import { en, lens } from './copy'
 import { empty, esc, heading, link, path } from './html'
 import { button, compare, detail, explorer, home, homeVisual, methods, shell, status } from './views'
 import { icon } from './art'
+import { research } from './research'
 
 const app = document.querySelector<HTMLElement>('#app')!
 let controller: AbortController
@@ -65,6 +66,8 @@ async function render(focus = false) {
     if (route === '/') {
       const overview = await read<Overview>('/api/v1/overview', signal)
       markup = home(new URLSearchParams(window.location.search), overview)
+    } else if (route === '/research') {
+      markup = research(params)
     } else if (route === '/explorer') {
       const data = await read<Catalog>(catalogURL(params), signal)
       const chosen = data.items.find(item => item.id === params.get('entity'))

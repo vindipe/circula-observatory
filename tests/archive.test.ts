@@ -5,6 +5,7 @@ import test from 'node:test'
 import { compatible, type Point } from '../src/shared/model'
 import { metricById } from '../src/shared/metrics'
 import { pointStatements } from '../src/worker/archive'
+import worker from '../src/worker/index'
 import { coinAsset, coinNetwork, putEntities, stellarKeys } from '../src/worker/catalog'
 import { coinPlan, retryDelay } from '../src/worker/collect'
 import { closeTimeFromLedgerPrefix, decodeCoinRows, decodeStellar, upstream, validPublicNode } from '../src/worker/sources'
@@ -92,4 +93,22 @@ test('source requests use a Workers-compatible redirect policy and surface redir
   })
   await assert.rejects(upstream('https://example.org/data'), /HTTP 302/)
   assert.equal(fetchMock.mock.callCount(), 1)
+})
+
+test('collection pause prevents scheduled and authenticated manual D1 operations', async () => {
+  const ctx = { waitUntil: () => assert.fail('Paused collection queued work') } as unknown as ExecutionContext
+  const env = {
+    DB: { prepare: () => assert.fail('Paused collection queried D1') } as unknown as D1Database,
+    ASSETS: {} as Fetcher,
+    INGEST_TOKEN: 'test-token',
+    COLLECTION_PAUSED: 'true',
+  }
+
+  await worker.scheduled({ scheduledTime: Date.now() } as ScheduledController, env, ctx)
+  const request = new Request('https://example.org/api/internal/collect?job=stellar-contracts', {
+    method: 'POST', headers: { Authorization: 'Bearer test-token' },
+  }) as Parameters<typeof worker.fetch>[0]
+  const response = await worker.fetch(request, env, ctx)
+  assert.equal(response.status, 503)
+  assert.deepEqual(await response.json(), { error: 'Data collection is paused.' })
 })

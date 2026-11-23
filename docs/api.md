@@ -5,11 +5,11 @@ The API is public and read-only. It serves the Observatory archive as UTF-8 JSON
 | Endpoint | Parameters and output |
 | --- | --- |
 | `GET /api/v1/metadata` | Metric definitions, categories, units, comparison rules, source documentation, collection cadence and licenses |
-| `GET /api/v1/overview` | Catalogued and measured counts by entity type, featured observations and latest observation timestamp |
+| `GET /api/v1/overview` | Catalogued and measured counts by entity type, featured observations, latest observation timestamp and collection pause flag |
 | `GET /api/v1/catalog` | `q` text, `kind` (`network`, `asset`, `protocol`, `system`), `perspective`, `category`, `metric`, `scope` (`measured` by default or `catalog`), `from`, `to` and `page` |
 | `GET /api/v1/entities/{id}` | Entity metadata, measured series range, latest values and entity relationships |
 | `GET /api/v1/series` | `entities` is a comma-separated list of one to four entity IDs. `metric` is required. Optional inclusive `from` and `to` use YYYY-MM-DD, up to 366 days. Optional `format=csv` or `format=json` requests an attachment |
-| `GET /api/v1/status` | Source collection status, latest observed and ingested timestamps, scheduled execution time, job failures and recent run records |
+| `GET /api/v1/status` | Source collection status, `collection_paused`, latest observed and ingested timestamps, scheduled execution time, job failures and recent run records |
 
 The catalog returns up to 27 records per page. Its date filters select series whose observed coverage span intersects the dates. The series endpoint reports the actual observations and counts absent days, including dates outside the recorded span. Use the detail endpoint's coverage for precise known bounds per subject.
 

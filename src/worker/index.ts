@@ -7,7 +7,12 @@ import { sourceLagMs, tick } from './collect'
 import { applySql } from './archive'
 import { operationalEntities, putEntities } from './catalog'
 
-interface Env { DB: D1Database; ASSETS: Fetcher; INGEST_TOKEN?: string }
+interface Env {
+  DB: D1Database
+  ASSETS: Fetcher
+  INGEST_TOKEN?: string
+  COLLECTION_PAUSED?: string
+}
 
 class ApiError extends Error {
   constructor(readonly status: number, message: string) { super(message) }
@@ -225,6 +230,7 @@ async function api(request: Request, env: Env, ctx: ExecutionContext) {
     if (!await tokenMatches(request.headers.get('Authorization') ?? '', 'Bearer ' + env.INGEST_TOKEN)) {
       throw new ApiError(401, 'Unauthorized.')
     }
+    if (env.COLLECTION_PAUSED === 'true') throw new ApiError(503, 'Data collection is paused.')
     const job = searchParams.get('job')
     if (!job || !/^[a-z0-9:-]{1,100}$/.test(job)) throw new ApiError(400, 'Specify a collector job ID.')
     ctx.waitUntil(tick(env.DB, 'manual', undefined, job))
@@ -232,9 +238,10 @@ async function api(request: Request, env: Env, ctx: ExecutionContext) {
   }
   if (request.method !== 'GET') throw new ApiError(405, 'This endpoint accepts GET.')
   if (pathname === '/api/v1/metadata') return json({ version: 'v1', metrics, sources }, 200, 3600)
-  if (pathname === '/api/v1/status') return json(await status(env.DB), 200, 0)
+  const collection_paused = env.COLLECTION_PAUSED === 'true'
+  if (pathname === '/api/v1/status') return json({ ...await status(env.DB), collection_paused }, 200, 0)
   if (pathname.startsWith('/api/v1/entities/')) return json(await detail(env.DB, decodeURIComponent(pathname.slice('/api/v1/entities/'.length))))
-  if (pathname === '/api/v1/overview') return json(await overview(env.DB), 200, 180)
+  if (pathname === '/api/v1/overview') return json({ ...await overview(env.DB), collection_paused }, 200, 180)
   if (pathname === '/api/v1/catalog') return json(await catalog(env.DB, searchParams), 200, 120)
   if (pathname === '/api/v1/series') return series(env.DB, searchParams)
   throw new ApiError(404, 'Endpoint not found.')
@@ -267,6 +274,7 @@ export default {
   },
 
   async scheduled(event, env, ctx) {
+    if (env.COLLECTION_PAUSED === 'true') return
     ctx.waitUntil((async () => {
       if (!await env.DB.prepare("SELECT 1 FROM entities WHERE id='protocol:soroswap'").first()) {
         await applySql(env.DB, [putEntities(operationalEntities)])

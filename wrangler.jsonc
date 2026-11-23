@@ -20,5 +20,6 @@
     }
   ],
   "triggers": { "crons": [] },
+  "vars": { "COLLECTION_PAUSED": "true" },
   "observability": { "enabled": true, "head_sampling_rate": 1 }
 }

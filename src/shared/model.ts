@@ -91,6 +91,7 @@ export interface Detail {
 }
 
 export interface Overview {
+  collection_paused: boolean
   counts: { kind: Kind; catalogued: number; measured: number }[]
   featured: (Entity & Coverage)[]
   last_observed: string | null
@@ -109,6 +110,7 @@ export interface Run {
 }
 
 export interface Status {
+  collection_paused: boolean
   now: string
   sources: {
     source: SourceId

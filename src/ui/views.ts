@@ -52,8 +52,8 @@ export function home(params: URLSearchParams, stats: Overview | null, broken = f
       + '<time datetime="' + esc(item.last_day) + '">' + esc(time(item.last_day)) + '</time>', 'sample')
   }).join('')
   return '<section class="hero"><div class="hero-copy"><p class="kicker"><span class="signal"></span> Open research observatory</p>'
-    + '<h1 tabindex="-1">The life of<br class="hero-break"> digital resources<span>.</span></h1><p class="hero-tagline">' + en.tagline + '</p>'
-    + '<div class="hero-actions">' + button('/explorer', 'Explore the data', true) + button('/methods', 'Read the methods', false, 'diagonal') + '</div>'
+    + '<h1 tabindex="-1">What can we observe<br class="hero-break"> without expiry<span>?</span></h1><p class="hero-tagline">' + en.tagline + '</p>'
+    + '<div class="hero-actions">' + button('/research', 'Explore the study', true) + button('/explorer', 'Explore the data', false, 'diagonal') + '</div>'
     + '</div><figure id="concept" class="concept">' + homeVisual(active) + '</figure></section>'
     + '<section class="perspectives" aria-label="Four perspectives"><div class="section-lead"><div><p class="kicker">Perspectives</p>'
     + '<h2>Follow the resource lifecycle</h2></div><div id="lens-link">' + link(path('/explorer', { perspective: active }),
@@ -63,6 +63,7 @@ export function home(params: URLSearchParams, stats: Overview | null, broken = f
     + '<form action="/explorer" data-navigation class="search-form"><label class="sr" for="home-search">Search the catalog</label>'
     + icon('search', 19) + '<input id="home-search" name="q" type="search" placeholder="' + en.find + '" required>'
     + '<input type="hidden" name="scope" value="catalog"><button aria-label="Run catalog search">' + icon('arrow', 18) + '</button></form></div>'
+    + (stats?.collection_paused ? '<p class="archive-note">Automatic updates paused. ' + link('/status', 'View collection status', 'text-link') + '</p>' : '')
     + (stats ? '<div class="stat-grid">' + archive + '</div>'
       : broken ? empty('Archive unavailable', 'The source archive could not be reached. Try again in a moment.', '<button class="button" data-retry>Retry</button>')
         : '<div class="skeleton" role="status">Loading archive coverage…</div>')
@@ -253,10 +254,12 @@ export function methods() {
 }
 
 export function status(data: Status) {
+  const scheduler = data.collection_paused ? 'Automatic collection paused'
+    : data.last_scheduled ? 'Scheduled execution recorded' : 'Awaiting scheduled execution'
   return heading('Operations', 'Data status', 'Collection history, observation freshness and upstream availability.',
     '<button class="button" data-retry>Refresh' + icon('arrow', 16) + '</button>')
-    + '<div class="scheduler-status panel"><div><p class="kicker">Scheduler</p><h2>' + (data.last_scheduled ? 'Scheduled execution recorded' : 'Awaiting scheduled execution')
-    + '</h2></div><p>' + (data.last_scheduled ? esc(time(data.last_scheduled, true)) : 'The archive has no scheduled run record yet.')
+    + '<div class="scheduler-status panel"><div><p class="kicker">Scheduler</p><h2>' + scheduler
+    + '</h2></div><p>' + (data.last_scheduled ? 'Last scheduled run · ' + esc(time(data.last_scheduled, true)) : 'The archive has no scheduled run record yet.')
     + '</p></div><div class="sources-grid">' + data.sources.map(item => {
       const source = sourceById.get(item.source)!
       return '<article class="panel source-card"><div class="row source-title"><h3>' + esc(source.name)

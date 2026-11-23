@@ -154,14 +154,18 @@ export async function tick(db: D1Database, trigger: Trigger, scheduledAt?: numbe
       ...base, status: outcome.status, row_count: outcome.count, note: outcome.note ?? null, finished_at: new Date().toISOString(),
     }
     const next = outcome.next ?? now + job.cadence_minutes * ONE_MINUTE
-    await applySql(db, [
+    const results = await applySql(db, [
       ...outcome.statements,
       statement(`
         UPDATE jobs SET leased_until=0,lease=NULL,failures=0,next_at=?,payload=?,last_success=? WHERE id=? AND lease=?
       `, next, outcome.payload ?? job.payload, run.finished_at, job.id, lease),
       log(run),
     ])
-    console.log(JSON.stringify({ collector: run.job_id, trigger, status: run.status, observations: run.row_count, scheduled_at: run.scheduled_at }))
+    console.log(JSON.stringify({
+      collector: run.job_id, trigger, status: run.status, observations: run.row_count, scheduled_at: run.scheduled_at,
+      batch_rows_read: results.reduce((sum, result) => sum + (result.meta.rows_read ?? 0), 0),
+      batch_rows_written: results.reduce((sum, result) => sum + (result.meta.rows_written ?? 0), 0),
+    }))
     return run
   } catch (error) {
     const run: Run = {
