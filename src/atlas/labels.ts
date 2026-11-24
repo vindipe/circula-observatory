@@ -31,3 +31,21 @@ export function gaps(l:Lang):[string,string][]{
  ['State size · node storage',['Serialized blocks, live state and disk space are separate measures. A verified monthly series for state size or node disk use is still required.','Blocchi serializzati, stato attivo e spazio su disco sono misure distinte. Manca una serie mensile verificata per stato o disco.','Les blocs sérialisés, l’état actif et le disque sont des mesures distinctes. Une série mensuelle vérifiée pour l’état ou le disque reste nécessaire.','Serialisierte Blöcke, aktiver Zustand und Festplattenbedarf sind getrennte Maße. Für Zustand und Festplatte fehlt eine geprüfte Monatsreihe.'][i]],
  ]
 }
+
+export function methodText(s:Series,l:Lang){
+ if(s.methodI18n?.[l])return s.methodI18n[l]
+ const match=s.metric.match(/^(inactive_pct|inactive|revived)_(\d+)d$/)
+ if(!match||l==='en')return s.method
+ const methods:Record<string,Record<string,string>>={
+  inactive:{it:'Somma dei BTC negli output non spesi all’ultimo blocco indicizzato del mese.',fr:'Somme des BTC dans les sorties non dépensées au dernier bloc indexé du mois.',de:'Summe der BTC in nicht ausgegebenen Outputs im letzten indexierten Block des Monats.'},
+  inactive_pct:{it:'100 × BTC nelle fasce di età selezionate / BTC in tutti gli output non spesi indicizzati a fine mese. Gli output dimostrabilmente non spendibili, come OP_RETURN, sono esclusi.',fr:'100 × BTC des tranches d’âge retenues / BTC de toutes les sorties non dépensées indexées en fin de mois. Les sorties manifestement indépensables, dont OP_RETURN, sont exclues.',de:'100 × BTC der ausgewählten Altersklassen / BTC aller indexierten ungenutzten Outputs am Monatsende. Nachweislich unausgebbare Outputs wie OP_RETURN sind ausgeschlossen.'},
+  revived:{it:'Differenza tra due fine mese del valore lordo cumulato degli input spesi nelle fasce selezionate. Include resto, autotrasferimenti e consolidamenti.',fr:'Différence entre deux fins de mois de la valeur brute cumulée dépensée dans les tranches retenues. Le change, les transferts à soi-même et les consolidations sont inclus.',de:'Differenz des kumulierten Bruttowerts ausgegebener Inputs der ausgewählten Altersklassen zwischen zwei Monatsenden. Wechselgeld, Eigenüberträge und Konsolidierungen sind enthalten.'}
+ }
+ return methods[match[1]][l]
+}
+export function scopeText(s:Series,l:Lang){
+ if(s.scopeI18n?.[l])return s.scopeI18n[l]
+ const age=s.metric.match(/^(?:inactive_pct|inactive|revived)_(\d+)d$/)?.[1]
+ if(age && l!=='en')return {it:`UTXO Bitcoin di almeno ${age} giorni. L’età decorre dalla creazione usando il massimo progressivo dei timestamp delle intestazioni dei blocchi.`,fr:`UTXO Bitcoin âgés d’au moins ${age} jours. L’âge est mesuré depuis la création à partir du maximum courant des horodatages des en-têtes de bloc.`,de:`Bitcoin-UTXOs mit einem Alter von mindestens ${age} Tagen. Das Alter seit Erstellung folgt dem fortlaufenden Maximum der Zeitstempel der Blockheader.`}[l]
+ return s.scope
+}

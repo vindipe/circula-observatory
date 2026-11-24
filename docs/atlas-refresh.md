@@ -22,3 +22,5 @@ python3 -B scripts/refresh_atlas_test.py
 ```
 
 The Worker preview configuration serves the Vite asset build and declares no storage bindings, schedules or production routes. Build after promotion so that the manifest and immutable files are packaged together. Keep `.cache/atlas-refresh/` on the offline runner between attempts. A monthly runner can invoke the preparation command after month-end. Hosting the resulting build is a separate release operation.
+
+The read-only GitHub Actions workflow `monthly-snapshot.yml` prepares a downloadable candidate on the second day of the month at 07:17 UTC. GitHub schedules workflows on the default branch. A preview branch alone does not activate that schedule. The job retains its monthly retry cache and uploads a review artifact after successful validation. It has no publishing credentials. Promotion to a live environment remains a separate operation.

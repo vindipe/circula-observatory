@@ -147,7 +147,7 @@ try {
   await eventKind.selectOption('restoration')
   assert.equal(await page.locator('[data-id="csv"]').isDisabled(),expectedEvents('restoration')===0)
   await eventKind.selectOption('expiry')
-  await page.getByText(/Sampling cannot establish this interval/).waitFor()
+  await page.locator('#events p[role=status]').filter({hasText:'Sampling cannot establish this interval'}).waitFor()
   assert.equal(await page.locator('[data-id="csv"]').isDisabled(),true)
   mark('Distribution date pair, hypothesis and Stellar observed/inferred event filters')
 
@@ -168,6 +168,7 @@ try {
   await photograph(phone,'home-mobile')
   const resource = phone.locator('#resource-select')
   await resource.selectOption('inactive')
+  await phone.locator('.a-feature-foot a[href*="view=inactive"]').waitFor()
   await phone.getByRole('link',{name:'Open dashboard'}).tap()
   await phone.getByRole('heading',{name:'Inactive holdings',level:1}).waitFor()
   await fits(phone)

@@ -11,7 +11,7 @@ import { mountCoverage } from './coverage'
 import { mountLorenz } from './lorenz'
 import { mountStellarActivity } from './stellar-activity'
 import { mountEvents } from './events'
-import { label } from './labels'
+import { label, methodText, scopeText } from './labels'
 import { esc } from '../ui/html'
 
 const root=document.querySelector<HTMLElement>('#app')!
@@ -53,7 +53,7 @@ function shell(page:string,body:string){
 function evidence(s:Series){
  const first=s.points[0][0],last=s.points.at(-1)![0]
  const end=s.lastObservation||s.latestObservation||last
- return `<div class="a-evidence"><div class="a-cite"><span>${t('last')} · ${esc(end)}</span><span>${t('source')} <a href="${esc(s.sourceUrl)}" target="_blank" rel="noreferrer">${esc(s.source)} ↗</a></span><a href="${esc(s.licenseUrl)}" target="_blank" rel="noreferrer">${esc(s.license)} ↗</a></div><details><summary>${t('methods')}</summary><p><strong>${t('period')}</strong> ${first} — ${last} · ${t('last')}: ${esc(end)}</p><p>${esc(s.scopeI18n?.[lang()]||s.scope)} · <code>${esc(s.metric)}</code></p><p>${esc(s.methodI18n?.[lang()]||s.method)}</p></details></div>`
+ return `<div class="a-evidence"><div class="a-cite"><span>${t('last')} · ${esc(end)}</span><span>${t('source')} <a href="${esc(s.sourceUrl)}" target="_blank" rel="noreferrer">${esc(s.source)} ↗</a></span><a href="${esc(s.licenseUrl)}" target="_blank" rel="noreferrer">${esc(s.license)} ↗</a></div><details><summary>${t('methods')}</summary><p><strong>${t('period')}</strong> ${first} — ${last} · ${t('last')}: ${esc(end)}</p><p>${esc(scopeText(s,lang()))} · <code>${esc(s.metric)}</code></p><p>${esc(methodText(s,lang()))}</p></details></div>`
 }
 function home(){
  const topic=previewTopics.find(x=>x.id===get('resource'))||topics[0]
@@ -69,7 +69,10 @@ function home(){
  if(topic.id==='expiration')mountEvents(host,data.stellar,lang(),true)
  else if(s)mountPlot(host,[s],{lang:lang(),title:label(s,lang()),compact:true})
  else host.textContent=t('noData')
- const change=(id:string,focus?:boolean)=>{pendingFocus=focus?'[data-resource="'+id+'"]':'#resource-select';nav({resource:id},true)}
+ const change=(id:string,focus?:boolean)=>{
+ const destination=previewTopics.find(x=>x.id===id)
+ if(destination)root.querySelector('.a-feature-foot .a-button')?.setAttribute('href',url(deep(destination.id,primary(destination.id))))
+ pendingFocus=focus?'[data-resource="'+id+'"]':'#resource-select';nav({resource:id},true)}
  root.querySelectorAll<HTMLButtonElement>('[data-resource]').forEach(b=>b.onclick=()=>change(b.dataset.resource!,true))
  ;root.querySelector<HTMLElement>('#resource-select')!.onchange=e=>{change((e.target as HTMLSelectElement).value);root.querySelector<HTMLElement>('#resource-select')?.focus({preventScroll:true})}
 }
@@ -112,9 +115,9 @@ function dash(topic:Topic){
  const hypothesis=topic==='concentration'?`<aside class="a-notice"><strong>${t('hypothesis')}</strong><p>${t('hypothesisText')}</p></aside>`:''
  const body=topic==='expiration'?'<div id="events" class="a-chartbox"></div>':s?
  controls(topic,s,match,others,from,to)+ (get('compare')?`<p class="a-note" role="status">${second?t('common'):t('noData')}</p>`:'')+
- `<div class="a-chartbox"><div id="chart0"></div>${paired.map(evidence).join('')}</div><div id="additional"></div>`:
+ `<div class="a-chartbox"><div id="chart0"></div>${paired.map(evidence).join('')}</div>${hypothesis}${intro?`<p class="a-explain">${intro}</p>`:''}<div id="additional"></div>`:
  `<section class="a-empty"><h2>${t('noData')}</h2>${primary(topic)?link(deep(topic,primary(topic)),t('reset'),'a-button'):''} ${coverageLink()}</section>`
- shell(topic,top+body+hypothesis+(intro?`<p class="a-explain">${intro}</p>`:'')+'<div class="a-bottom">'+coverageLink()+'</div>')
+ shell(topic,top+body+'<div class="a-bottom">'+coverageLink()+'</div>')
  const share=root.querySelector<HTMLButtonElement>('[data-share]')!
  share.onclick=async()=>{try{await navigator.clipboard.writeText(location.href);share.textContent=t('copied')}catch{window.prompt(t('share'),location.href)}}
  if(topic==='expiration'){

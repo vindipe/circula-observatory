@@ -1,0 +1,43 @@
+name: Prepare monthly atlas snapshot
+on:
+  schedule:
+    - cron: '17 7 2 * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: atlas-monthly-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - id: cutoff
+        run: echo "month=$(date -u -d "$(date -u +%Y-%m-01) -1 day" +%Y-%m)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache/restore@v4
+        with:
+          path: .cache/atlas-refresh
+          key: atlas-inputs-${{ steps.cutoff.outputs.month }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: atlas-inputs-${{ steps.cutoff.outputs.month }}-
+      - run: python3 -B scripts/refresh-atlas.py
+      - uses: actions/cache/save@v4
+        if: success() || failure()
+        with:
+          path: .cache/atlas-refresh
+          key: atlas-inputs-${{ steps.cutoff.outputs.month }}-${{ github.run_id }}-${{ github.run_attempt }}
+      - run: node scripts/pack-atlas.mjs .cache/monthly/CIRCULA-Observatory.html
+      - uses: actions/upload-artifact@v4
+        with:
+          name: atlas-${{ steps.cutoff.outputs.month }}
+          path: |
+            public/atlas/current.json
+            public/atlas/releases/
+            .cache/monthly/CIRCULA-Observatory.html
+          include-hidden-files: true

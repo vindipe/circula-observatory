@@ -29,6 +29,7 @@ jobs:
           done
           CHROMIUM_PATH="$(node --input-type=module -e "import {chromium} from 'playwright'; console.log(chromium.executablePath())")" OBSERVATORY_URL=http://127.0.0.1:4173 npm run test:atlas-browser
       - run: node scripts/pack-atlas.mjs .cache/screenshots/CIRCULA-Observatory.html
+      - run: node tests/atlas-offline.test.mjs .cache/screenshots/CIRCULA-Observatory.html
       - uses: actions/upload-artifact@v4
         if: always()
         with:
