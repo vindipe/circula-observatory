@@ -17,6 +17,7 @@
     "seed": "node --import tsx scripts/bootstrap.ts",
     "deploy": "npm run build && wrangler deploy",
     "test:browser": "node tests/browser.test.mjs",
+    "test:atlas-browser": "node tests/atlas-browser.test.mjs",
     "social": "node --import tsx scripts/social.ts"
   },
   "license": "MIT",

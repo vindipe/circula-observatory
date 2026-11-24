@@ -6,3 +6,9 @@
 
 /research-data/*
   Cache-Control: public, max-age=86400
+
+/atlas/current.json
+  Cache-Control: no-cache
+
+/atlas/releases/*
+  Cache-Control: public, max-age=31536000, immutable

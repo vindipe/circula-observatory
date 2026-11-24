@@ -1,0 +1,71 @@
+.at-plot {
+  --plot-ink:#142c29;
+  --plot-muted:#526660;
+  --plot-rule:#d7e4dd;
+  box-sizing:border-box;
+  color:var(--plot-ink);
+  min-width:0;
+  font-variant-numeric:tabular-nums;
+}
+.at-plot *, .at-plot *::before, .at-plot *::after {box-sizing:border-box}
+.at-plot [hidden] {display:none!important}
+.at-plot .at-plot-head {display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin:0 0 .65rem;border:0;background:transparent;position:static;padding:0}
+.at-plot h3 {margin:0;color:var(--plot-ink);font-size:clamp(1rem,1.35vw,1.28rem);font-weight:650;letter-spacing:-.035em;line-height:1.3}
+.at-plot-controls,.at-plot-switch,.at-plot-summary,.at-plot-legend,.at-plot-key,.at-plot-readout,.at-plot-tooltip span {display:flex;align-items:center}
+.at-plot-controls {gap:.5rem}
+.at-plot-controls button,.at-plot-key {border:0;background:transparent;color:var(--plot-muted);font:inherit;cursor:pointer}
+.at-plot-controls button {display:inline-flex;align-items:center;justify-content:center;gap:.35rem;border-radius:4px;padding:.43rem .57rem;line-height:1;font-size:.73rem;font-weight:620}
+.at-plot-switch {padding:2px;background:#eef3ef;border:1px solid transparent;border-radius:6px}
+.at-plot-switch button[aria-pressed=true] {background:white;color:var(--plot-ink);box-shadow:0 1px 3px #1c3e301c}
+.at-plot-controls button:hover,.at-plot-key:hover:not([aria-disabled=true]) {color:#075e43;background:#e6f1e9}
+.at-plot-export {border:1px solid var(--plot-rule)!important}
+.at-plot-summary {justify-content:space-between;gap:1rem;margin:.2rem 0 1rem}
+.at-plot-legend {gap:.4rem 1rem;flex-wrap:wrap}
+.at-plot-key {gap:.35rem;min-height:28px;padding:0 .2rem;border-radius:3px;font-size:.78rem;line-height:1.2;font-weight:620}
+.at-plot-key svg {color:var(--plot-color)}
+.at-plot-key[aria-pressed=false] {opacity:.62;text-decoration:line-through}
+.at-plot-key[aria-disabled=true] {cursor:default}
+.at-plot-unit,.at-plot-y,.at-plot-x,.at-plot-readout {font-family:'IBM Plex Mono',ui-monospace,SFMono-Regular,Consolas,monospace;font-variant-numeric:tabular-nums}
+.at-plot-unit {color:var(--plot-muted);font-size:.72rem;line-height:1.25;text-align:right}
+.at-plot-grid {display:grid;grid-template-columns:max-content minmax(0,1fr);grid-template-rows:auto 1.15rem;gap:.4rem .75rem;align-items:stretch;min-width:0}
+.at-plot-y {display:flex;flex-direction:column;justify-content:space-between;text-align:right;font-size:.66rem;color:var(--plot-muted);padding:0;line-height:0;min-width:2rem}
+.at-plot-canvas {height:clamp(175px,21vw,300px);position:relative;isolation:isolate;cursor:crosshair;touch-action:pan-y;min-width:0}
+.at-plot button:focus-visible,.at-plot-canvas:focus-visible,.at-plot-scroll:focus-visible {outline:2px solid #087653;outline-offset:3px}
+.at-plot-svg {display:block;width:100%;height:100%;overflow:visible}
+.at-plot-rules {fill:none;stroke:var(--plot-rule);stroke-width:1;vector-effect:non-scaling-stroke}
+.at-plot-line {stroke-width:2.35;vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round}
+.at-plot-x {grid-column:2;position:relative;color:var(--plot-muted);font-size:.66rem}
+.at-plot-x span {position:absolute;white-space:nowrap}
+.at-plot-cursor {position:absolute;top:0;bottom:0;border-left:1px dashed #748a80;pointer-events:none}
+.at-plot-dot {position:absolute;width:9px;height:9px;background:var(--plot-color);border:2px solid white;box-shadow:0 0 0 1px var(--plot-color);border-radius:50%;transform:translate(-55%,-50%)}
+.at-plot-dot-1 {border-radius:1px}
+.at-plot-dot-2 {border-radius:1px;transform:translate(-55%,-50%) rotate(45deg)}
+.at-plot-tooltip {position:absolute;z-index:1;top:.4rem;max-width:calc(100% - 4px);padding:.58rem .7rem;border:1px solid #a6c1b4;border-radius:5px;background:#fff;box-shadow:0 4px 15px #113e2720;font-size:.75rem;line-height:1.5;pointer-events:none;overflow-wrap:anywhere}
+.at-plot-tooltip strong {display:block;font-size:.7rem;color:var(--plot-muted)}
+.at-plot-readout {min-height:2.25rem;gap:.4rem 1rem;flex-wrap:wrap;color:var(--plot-ink);font-size:.77rem;line-height:1.5;border-top:1px solid var(--plot-rule);margin:.55rem 0 0;padding-top:.48rem}
+.at-plot-readout time {color:var(--plot-muted)}
+.at-plot-readout span {display:inline-flex;align-items:center;gap:.35rem}
+.at-plot-tooltip span {gap:.35rem}
+.at-plot-readout i,.at-plot-tooltip i {width:.45rem;height:.45rem;flex:none;border-radius:50%;background:var(--plot-color)}
+.at-plot-readout b,.at-plot-tooltip b {font-weight:650}
+.at-plot-scroll {overflow:auto;max-height:22rem;border-top:1px solid var(--plot-rule);overscroll-behavior:contain}
+.at-plot-data table {width:100%;border-collapse:collapse;font-size:.8rem;color:var(--plot-ink);background:white}
+.at-plot-data th,.at-plot-data td {padding:.57rem .7rem;border:0;border-bottom:1px solid var(--plot-rule);text-align:right;white-space:nowrap}
+.at-plot-data th:first-child {text-align:left}
+.at-plot-data thead th {font-weight:650;background:#eff4f0;position:sticky;top:0}
+.at-plot-data tbody th {font-weight:450}
+.at-plot-gap:not(:empty) {font-size:.74rem;color:var(--plot-muted);margin-top:.5rem}
+.at-plot-sr {position:absolute;clip-path:inset(50%);height:1px;width:1px;overflow:hidden;white-space:nowrap}
+.at-plot-compact .at-plot-canvas {height:clamp(105px,13vw,175px)}
+.at-plot-compact .at-plot-summary {margin-bottom:.65rem}
+@media(max-width:640px){
+  .at-plot-grid {column-gap:.4rem}
+  .at-plot-head {gap:.45rem!important}
+  .at-plot-summary {margin-bottom:.75rem}
+  .at-plot-controls button,.at-plot-key {min-height:36px}
+  .at-plot-y,.at-plot-x {font-size:.62rem}
+  .at-plot-canvas {height:185px}
+  .at-plot-compact .at-plot-canvas {height:125px}
+  .at-plot-controls {gap:.3rem}
+  .at-plot-readout {font-size:.7rem}
+}

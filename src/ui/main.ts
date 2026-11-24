@@ -194,6 +194,7 @@ document.addEventListener('click', event => {
   if (!anchor || anchor.target || anchor.hasAttribute('download') || event.defaultPrevented || event.button !== 0
     || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return
   const destination = new URL(anchor.href)
+  if (['/', '/research', '/research/'].includes(destination.pathname)) return
   if (destination.origin !== location.origin || destination.pathname.startsWith('/api/')
     || anchor.getAttribute('href')?.startsWith('#')) return
   event.preventDefault()

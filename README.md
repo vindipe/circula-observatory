@@ -10,6 +10,20 @@ The Observatory is an independent CIRCULA research prototype. Its public catalog
 - [Public API and downloads](docs/api.md)
 - [Adding a controlled node adapter](docs/node-adapters.md)
 
+## Persistence atlas preview
+
+The atlas opens at the root URL and serves monthly snapshots from static Worker assets. The resource navigator links to History Growth, Inactive Holdings, Holding Concentration, Expiration & Renewal and Circulation. Data Coverage also lists end-of-month supply and positive-address counts. The archived entity and catalog endpoints keep their existing routes.
+
+Use `npm run dev` for the atlas alone. For an offline copy, run `node scripts/pack-atlas.mjs CIRCULA-Observatory.html` after installing dependencies. The resulting HTML includes the charts, source metadata, methods, data and exports. Each dataset retains its own license.
+
+- [Monthly refresh, validation and atomic publication](docs/atlas-refresh.md)
+- [Coin Metrics coverage and monthly aggregation](docs/community-snapshots.md)
+- [Bitcoin inactivity and spending cohorts](docs/holdings.md)
+- [Address distribution and available exact ranks](docs/distribution.md)
+- [Event definitions and Stellar sampling](docs/stellar-sampling.md)
+
+The preview configuration is `wrangler.atlas-preview.jsonc`. It serves static assets without a D1 binding. The preview branch runs the browser checks separately from the production Worker.
+
 ## Run locally
 
 Use Node.js 22.16 or newer and npm.

@@ -7,3 +7,4 @@ dist/
 .dev.vars*
 .cache/
 test-results/
+__pycache__/
