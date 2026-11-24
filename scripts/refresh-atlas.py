@@ -171,7 +171,7 @@ def collect(source, work, end, retry, baseline):
     fingerprints = [digest(script)]
     inputs = {
         "stellar": [ROOT / "scripts/stellar_decode.cjs"],
-        "distribution": [ROOT / "scripts/distribution_early.py"],
+        "distribution": [ROOT / "scripts/distribution_early.py", ROOT / "scripts/distribution_i18n.py"],
         "community": [ROOT / "scripts/community_i18n.py"],
         "history": [ROOT / "public/research-data/bitcoin-bytes.v1.json"],
     }

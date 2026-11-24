@@ -60,14 +60,58 @@ export function exactCurve(snapshot:GroupedDistribution['months'][string]) {
   return curve
 }
 
+export interface DistributionSource {
+  source:string
+  sourceUrl:string
+  license:string
+  licenseUrl:string
+  scope:string
+}
+
+const toolsCopy = {
+  en:{export:'Download distribution CSV',share:'Share of BTC in this band'},
+  it:{export:'Scarica la distribuzione in CSV',share:'Quota dei BTC nella fascia'},
+  fr:{export:'Télécharger la distribution en CSV',share:'Part des BTC dans cette tranche'},
+  de:{export:'Verteilung als CSV herunterladen',share:'BTC-Anteil in dieser Klasse'},
+}
+
+export function distributionCSV(data:GroupedDistribution, months:string[], source:DistributionSource) {
+  const dates = [...new Set(months)].filter(m => data.months[m] && groupedCurve(data.bands,data.months[m]))
+  const exactPair = dates.every(m => exactCurve(data.months[m]))
+  const header = ['month_utc','curve','displayed_curve','row_type','band','lower_sats_inclusive','upper_sats_exclusive','balance_sats_per_address','addresses','btc','share_of_observed_btc','cumulative_address_share','cumulative_btc_share','gini','source','source_url','license','license_url','scope']
+  const records: (string|number|null)[][] = []
+  const cite = [source.source,source.sourceUrl,source.license,source.licenseUrl,source.scope]
+  for (const month of dates) {
+    const row = data.months[month]
+    const grouped = groupedCurve(data.bands,row)!
+    const common = [month,'grouped_lower_bound',String(!exactPair)]
+    records.push([...common,'origin','','','','',0,0,0,0,0,grouped.gini,...cite])
+    for (const [i,band] of data.bands.entries()) {
+      records.push([...common,'band',band.label,band.lowerSats,band.upperSats,'',row.counts[i],row.btc[i],
+        row.btc[i]/grouped.amount,...grouped.points[i+1],grouped.gini,...cite])
+    }
+    const ranked = exactCurve(row)
+    if (ranked && row.balanceRanks) {
+      const common = [month,'exact_address',String(exactPair)]
+      records.push([...common,'origin','','','','',0,0,0,0,0,ranked.gini,...cite])
+      for (const [i,[sats,n]] of row.balanceRanks.entries()) {
+        records.push([...common,'balance_rank','','','',sats,n,sats*n/1e8,sats*n/ranked.amount,...ranked.points[i+1],ranked.gini,...cite])
+      }
+    }
+  }
+  function quote(v:string|number|null) {return '"' + String(v ?? '').replace(/"/g,'""') + '"'}
+  return [header,...records].map(r => r.map(quote).join(',')).join('\r\n')+'\r\n'
+}
+
 let sequence = 0
-export function mountLorenz(root:HTMLElement, data:GroupedDistribution, lang:string, from?:string, to?:string, onChange?:(from:string,to:string)=>void) {
+export function mountLorenz(root:HTMLElement, data:GroupedDistribution, lang:string, from?:string, to?:string, onChange?:(from:string,to:string)=>void, minMonth?:string, maxMonth?:string, source?:DistributionSource) {
   const locale = lang.split('-')[0] in copy ? lang.split('-')[0] as keyof typeof copy : 'en'
   const t = copy[locale]
+  const actions = toolsCopy[locale]
   const number = new Intl.NumberFormat(locale,{maximumSignificantDigits:17})
   const fraction = new Intl.NumberFormat(locale,{maximumFractionDigits:4})
   const pct = new Intl.NumberFormat(locale,{style:'percent',maximumFractionDigits:3})
-  const dates = Object.keys(data.months).filter(m => /^\d{4}-(0[1-9]|1[0-2])$/.test(m) && groupedCurve(data.bands,data.months[m])).sort()
+  const dates = Object.keys(data.months).filter(m => /^\d{4}-(0[1-9]|1[0-2])$/.test(m) && (!minMonth || m >= minMonth) && (!maxMonth || m <= maxMonth) && groupedCurve(data.bands,data.months[m])).sort()
   if (!dates.length) {
     root.innerHTML = `<section class="atlas-lorenz"><h3>${t.title}</h3><p role="status">${t.empty}</p></section>`
     return
@@ -88,7 +132,8 @@ export function mountLorenz(root:HTMLElement, data:GroupedDistribution, lang:str
     <div class="al-axis-x">${t.x}</div><p id="${id}-desc" class="al-description">${t.detail}</p>
     <div class="al-results"></div><label class="al-picker">${t.inspect}<select data-band>${data.bands.map((b,i) => `<option value="${i}">${esc(b.label)}</option>`).join('')}</select></label>
     <div class="al-readout" aria-live="polite"></div>
-    <details><summary>${t.bands}</summary><div class="al-table" tabindex="0" role="region" aria-label="${t.bands}"></div></details></section>`
+    ${source ? `<div class="al-source"><a href="${esc(source.sourceUrl)}" target="_blank" rel="noreferrer">${esc(source.source)}</a> · <a href="${esc(source.licenseUrl)}" target="_blank" rel="noreferrer">${esc(source.license)}</a>${/^(CC(?:0|[ -]BY)|ODbL|PDDL|Public Domain)/i.test(source.license) ? `<button class="al-exact" type="button" data-export-bands>${actions.export} ↓</button>` : ''}</div>` : ''}
+    <details open><summary>${t.bands}</summary><div class="al-table" tabindex="0" role="region" aria-label="${t.bands}"></div></details></section>`
   const $ = <T = HTMLElement>(s:string) => root.querySelector(s) as unknown as T
   const exact = (n:number) => number.format(n)
   const draw = () => {
@@ -109,7 +154,13 @@ export function mountLorenz(root:HTMLElement, data:GroupedDistribution, lang:str
     $('.al-legend').innerHTML = months.map((m,i) => `<span><i class="al-track-${i}"></i>${esc(m)}</span>`).join('') + `<span><i class="al-equal"></i>${t.equality}</span>`
     $('.al-results').innerHTML = `<b>${empirical ? ex.gini : t.gini}</b>${curves.map((c,i) => `<span>${months[i]} <strong>${fraction.format(c.gini)}</strong></span>`).join('')}`
     const columns = months.map(m => `<th scope="col">${t.addresses} · ${m}</th><th scope="col">${t.btc} · ${m}</th>`).join('')
-    const rows = data.bands.map((b,i) => `<tr><th scope="row">${esc(b.label)}</th>${months.map(m => `<td>${exact(data.months[m].counts[i])}</td><td>${exact(data.months[m].btc[i])}</td>`).join('')}</tr>`).join('')
+    const rows = data.bands.map((b,i) => {
+      const cells = months.map((m,j) => {
+        const snapshot = data.months[m], share = snapshot.btc[i] / grouped[j].amount
+        return `<td>${exact(snapshot.counts[i])}</td><td class="al-amount">${exact(snapshot.btc[i])}<span class="al-share"><i aria-hidden="true"><b class="al-fill-${j}" style="width:${share*100}%"></b></i><span title="${esc(actions.share)}"><span class="al-sr">${actions.share} </span>${pct.format(share)}</span></span></td>`
+      }).join('')
+      return `<tr><th scope="row">${esc(b.label)}</th>${cells}</tr>`
+    }).join('')
     $('.al-table').innerHTML = `<table><caption>${t.bands}</caption><thead><tr><th scope="col">${t.band}</th>${columns}</tr></thead><tbody>${rows}</tbody></table>`
     const readBand = () => {
       svg.querySelector('.al-markers')!.innerHTML = grouped.map((c,i) => {
@@ -143,6 +194,15 @@ export function mountLorenz(root:HTMLElement, data:GroupedDistribution, lang:str
     draw()
     onChange?.(earlier,later)
   }))
+  root.querySelector('[data-export-bands]')?.addEventListener('click',() => {
+    if (!source) return
+    const download = document.createElement('a')
+    const csv = distributionCSV(data,[earlier,later],source)
+    download.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}))
+    download.download = `circula_btc_address_distribution_${earlier}_${later}.csv`
+    download.click()
+    setTimeout(()=>URL.revokeObjectURL(download.href),5000)
+  })
   root.querySelector('[data-exact]')?.addEventListener('click',() => {
     earlier = exactDates[0]
     later = exactDates[exactDates.length-1]

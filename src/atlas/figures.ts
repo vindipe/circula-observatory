@@ -20,4 +20,4 @@ export function figure(topic:Topic){
   return `<svg class="a-figure" viewBox="0 0 155 80" aria-hidden="true" focusable="false"><g fill="none" stroke="#3a5744" stroke-width="1.25" stroke-linejoin="round" stroke-linecap="round">${drawing}</g></svg>`
 }
 export const logo='<svg class="a-symbol" viewBox="0 0 48 48" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.7" stroke-linejoin="round"><path d="M24 3 42 13.5v20L24 44 6 33.5v-20Z"/><path d="m24 11 11 6.4v12.9L24 37l-11-6.7V17.4Z"/><path d="m24 19 5 3v6l-5 3-5-3v-6Z"/></g><path d="m24 3 18 10.5-7 4L24 11Z" fill="#75b345"/></svg>'
-export const arrow='<span aria-hidden="true">↗</span>'
+export const arrow='<svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 13 13 3M5 3h8v8"/></svg>'

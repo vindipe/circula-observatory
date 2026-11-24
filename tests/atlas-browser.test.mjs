@@ -53,6 +53,7 @@ try {
   const btn = page.locator('button[data-resource="inactive"]')
   await btn.focus()
   await btn.press('Enter')
+  await page.locator('[data-resource="inactive"][aria-pressed="true"]').waitFor()
   assert.equal(await btn.getAttribute('aria-pressed'),'true')
   assert.equal(param(page,'resource'),'inactive')
   assert.match(await page.locator('.a-feature-foot p').innerText(),/supply stays idle/)

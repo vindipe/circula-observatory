@@ -42,3 +42,14 @@
 .atlas-lorenz :focus-visible{outline:2px solid #087653;outline-offset:2px}
 
 .al-exact{min-height:38px;border:1px solid #98b9a6;border-radius:5px;background:#eff7f0;color:#14593b;padding:.35rem .65rem;font:inherit;font-size:.75rem;cursor:pointer}.al-exact:hover{background:#e0eee3}
+
+.al-share,.al-source{display:flex;align-items:center;gap:.45rem}
+.al-source{flex-wrap:wrap;font-size:.76rem;margin:.6rem 0}
+.al-source button{margin-left:auto}
+.al-amount{min-width:8rem}
+.al-share{justify-content:flex-end;font: .68rem 'IBM Plex Mono',ui-monospace,monospace;color:#415b4f;margin-top:.16rem}
+.al-share>i{width:clamp(3rem,6vw,6rem);background:#dae7dd;height:5px;overflow:hidden}
+.al-share>i b{display:block;height:100%}
+.al-fill-0{background:#087653}.al-fill-1{background:repeating-linear-gradient(45deg,#294f94,#294f94 3px,#597bb3 3px,#597bb3 5px)}
+.al-share>span{min-width:4.8em}
+.al-sr{position:absolute;clip-path:inset(50%);width:1px;height:1px;overflow:hidden}

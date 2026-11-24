@@ -60,7 +60,7 @@ function home(){
  const s=primary(topic.id)
  const last=s?.points.at(-1)
  const val=last?new Intl.NumberFormat(lang(),{maximumFractionDigits:s!.unit==='0–1'?4:2}).format(last[1]):''
- const resourceButtons=previewTopics.map(x=>`<button type="button" class="a-tile" data-resource="${x.id}" aria-pressed="${x.id===topic.id}">${figure(x.id)}<strong>${t(x.resource)}</strong><span>${t(x.id)} <i aria-hidden="true">↗</i></span></button>`).join('')
+ const resourceButtons=previewTopics.map(x=>`<button type="button" class="a-tile" data-resource="${x.id}" aria-pressed="${x.id===topic.id}">${figure(x.id)}<strong>${t(x.resource)}</strong><span>${t(x.id)} <i aria-hidden="true">${arrow}</i></span></button>`).join('')
  const mobile=`<label class="a-mobile-resource">${t('resource')}<select id="resource-select">${previewTopics.map(x=>option(x.id,t(x.resource)+' → '+t(x.id),topic.id)).join('')}</select></label>`
  shell('home',`<section class="a-hero"><div class="a-hero-intro"><h1>${t('title')}<em>.</em></h1><p class="a-tagline">${t('intro')}</p><div class="a-research"><span class="a-micro">${t('researchLabel')}</span><p>${t('research')}</p></div></div>${mobile}<div class="a-feature"><div class="a-feature-heading"><span class="a-micro"><b class="a-dot"></b> ${t(topic.id)}</span><span class="a-ticker">${esc(s?.symbol||s?.asset.toUpperCase()||(topic.id==='expiration'?'STELLAR':''))}</span></div>${last?`<div class="a-number">${val} <small>${esc(s!.unit)}</small></div><p class="a-caption">${formatMonth(last[0])} · ${esc(label(s!,lang()))}</p>`:''}<div id="home-chart"></div><div class="a-feature-foot"><div><p>${t(topic.question)}</p>${s?`<small><a href="${esc(s.sourceUrl)}" target="_blank" rel="noreferrer">${esc(s.source)}</a> · ${esc(s.license)}</small>`:''}</div>${link(deep(topic.id,s),t('open')+' '+arrow,'a-button')}</div></div></section>
  <section id="resources" class="a-navigator"><div class="a-sectionhead"><div><div class="a-path"><span>${t('persistence')}</span><i>→</i><span>${t('resources')}</span><i>→</i><span>${t('phenomena')}</span></div><h2>${t('navigate')}</h2></div><p>${t('choose')}</p></div><div class="a-resource-list">${resourceButtons}</div></section>
@@ -69,7 +69,7 @@ function home(){
  if(topic.id==='expiration')mountEvents(host,data.stellar,lang(),true)
  else if(s)mountPlot(host,[s],{lang:lang(),title:label(s,lang()),compact:true})
  else host.textContent=t('noData')
- const change=(id:string,focus?:boolean)=>{nav({resource:id},true);if(focus)root.querySelector<HTMLElement>('[data-resource="'+id+'"]')?.focus({preventScroll:true})}
+ const change=(id:string,focus?:boolean)=>{pendingFocus=focus?'[data-resource="'+id+'"]':'#resource-select';nav({resource:id},true)}
  root.querySelectorAll<HTMLButtonElement>('[data-resource]').forEach(b=>b.onclick=()=>change(b.dataset.resource!,true))
  ;root.querySelector<HTMLElement>('#resource-select')!.onchange=e=>{change((e.target as HTMLSelectElement).value);root.querySelector<HTMLElement>('#resource-select')?.focus({preventScroll:true})}
 }
@@ -153,7 +153,7 @@ function dash(topic:Topic){
  if(topic==='concentration'&&data.distribution.distribution){
  const wrap=document.createElement('div');extra.appendChild(wrap);wrap.className='a-chartbox'
  const p=params()
- mountLorenz(wrap,data.distribution.distribution as Parameters<typeof mountLorenz>[1],lang(),p.get('lorenzFrom')||from,p.get('lorenzTo')||to,(a,b)=>nav({lorenzFrom:a,lorenzTo:b},true,false,true))
+ mountLorenz(wrap,data.distribution.distribution as Parameters<typeof mountLorenz>[1],lang(),p.get('lorenzFrom')||from,p.get('lorenzTo')||to,(a,b)=>nav({lorenzFrom:a,lorenzTo:b},true,false,true),from,to,data.distribution.series[0])
  }
  const circulation=series.filter(a=>a.asset===s.asset&&a.dashboard==='circulation')
  if(topic!=='circulation'&&circulation.length){
@@ -201,13 +201,14 @@ root.addEventListener('click',e=>{
  e.preventDefault();history.pushState(null,'',a.href);render();window.scrollTo(0,0);root.querySelector<HTMLElement>('main')?.focus({preventScroll:true})
 })
 let drawId=0
+let pendingFocus=''
 const sourceFor:Record<string,Provider>={history:'history',inactive:'holdings',concentration:'distribution',expiration:'stellar',circulation:'community',context:'community'}
 function render(){
  const id=++drawId
  const page=get('view')||'home'
  const source=sourceFor[page==='home'?(get('resource')||'history'):page]||'history'
- const need:Provider[]=page==='coverage'?[...providers]:page==='home'?[source]:[...new Set<Provider>([source,'community',...(page==='circulation'?['holdings' as const]:[])])]
- function done(){if(id!==drawId)return;root.removeAttribute('aria-busy');series=Object.values(data).flatMap(b=>b.series).filter(s=>s.points?.length);paint()}
+ const need:Provider[]=page==='coverage'?[...providers]:page==='home'?[source]:[...new Set<Provider>([source,'community',...((page==='circulation'||page==='history'||page==='concentration'||page==='context')?['holdings' as const]:[])])]
+ function done(){if(id!==drawId)return;root.removeAttribute('aria-busy');series=Object.values(data).flatMap(b=>b.series).filter(s=>s.points?.length);paint();if(pendingFocus){root.querySelector<HTMLElement>(pendingFocus)?.focus({preventScroll:true});pendingFocus=''}}
  if(need.every(k=>data[k])){done();return}
  root.setAttribute('aria-busy','true')
  loadData(need).then(done).catch(()=>{
