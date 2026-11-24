@@ -26,7 +26,19 @@ class PublishedHoldings(unittest.TestCase):
                 self.assertEqual((row["kind"], row["unit"]), (kind, unit))
                 self.assertEqual(row["points"][-1], [check["month"], value])
                 self.assertEqual(len(row["points"]), len({point[0] for point in row["points"]}))
-                self.assertEqual(row["points"][0], ["2009-01", 0])
+                if check["thresholdDays"] > 31:
+                    self.assertEqual(row["points"][0], ["2009-01", 0])
+
+    def test_one_day_cohorts_and_unspent_output_stock(self):
+        self.assertEqual({check["thresholdDays"] for check in self.snapshot["verification"]}, {1, 90, 365})
+        for metric in ("inactive", "revived"):
+            for first, older in zip(self.series[f"{metric}_1d"]["points"], self.series[f"{metric}_90d"]["points"], strict=True):
+                self.assertEqual(first[0], older[0])
+                self.assertGreaterEqual(first[1], older[1])
+        counts = self.series["utxo_count"]
+        self.assertEqual((counts["unit"], counts["kind"]), ("UTXO", "stock"))
+        self.assertEqual(counts["points"][-1][1], self.snapshot["lastDayUtxoCount"])
+        self.assertTrue(all(type(value) is int and value >= 0 for _, value in counts["points"]))
 
     def test_gross_input_flow_matches_independent_block_sum(self):
         series = self.series["gross_input_volume_btc"]

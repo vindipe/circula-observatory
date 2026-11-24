@@ -33,7 +33,22 @@ async function embedSnapshot() {
     }
     return [provider, snapshot]
   }))
-  return gzipSync(Buffer.from(JSON.stringify(Object.fromEntries(entries))), {level:9}).toString('base64')
+  let studyPointer
+  try {
+    studyPointer = JSON.parse(await readFile(join(publicDir, 'atlas/study-release.json'), 'utf8'))
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error
+  }
+  const study = {}
+  for (const key of ['frozen','current','series']) {
+    const file = studyPointer?.files[key] ?? '/atlas/study-' + key + '.json'
+    if (studyPointer && (!/^[a-f0-9]{64}$/.test(studyPointer.release) ||
+        file !== '/atlas/study-releases/' + studyPointer.release + '/study-' + key + '.json')) throw Error('Invalid study release pointer')
+    study[key] = JSON.parse(await readFile(join(publicDir, file), 'utf8'))
+  }
+  if (study.current.cutoffUtc !== study.series.cutoffUtc) throw Error('Mismatched study cutoffs')
+  const payload = {atlas:Object.fromEntries(entries),samples:{current:study.current,frozen:study.frozen},months:study.series}
+  return gzipSync(Buffer.from(JSON.stringify(payload)), {level:9}).toString('base64')
 }
 
 const [bundle, snapshot, template, favicon] = await Promise.all([
@@ -116,7 +131,10 @@ const html = `<!doctype html>
 <script>(async () => {
 const compressed = Uint8Array.from(atob(document.getElementById('atlas-snapshot').textContent), c => c.charCodeAt(0));
 const stream = new Blob([compressed]).stream().pipeThrough(new DecompressionStream('gzip'));
-window.__atlas = await new Response(stream).json();
+const payload = await new Response(stream).json();
+window.__atlas = payload.atlas;
+window.__studySnapshots = payload.samples;
+window.__studyMonths = payload.months;
 document.getElementById('atlas-snapshot').remove();
 ${offlineRouter}
 ${js.replace(/<\/script/gi,'<\\/script')}

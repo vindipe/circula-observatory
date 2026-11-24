@@ -21,7 +21,7 @@ BANDS = ["under_1h", "1h_to_1d", "1d_to_1w", "1w_to_1m", "1m_to_2m", "2m_to_3m",
          "3m_to_4m", "4m_to_5m", "5m_to_6m", "6m_to_9m", "9m_to_1y", "1y_to_18m",
          "18m_to_2y", "2y_to_3y", "3y_to_4y", "4y_to_5y", "5y_to_6y", "6y_to_7y",
          "7y_to_8y", "8y_to_10y", "10y_to_12y", "12y_to_15y", "over_15y"]
-THRESHOLDS = {90: BANDS.index("3m_to_4m"), 365: BANDS.index("1y_to_18m")}
+THRESHOLDS = {1: BANDS.index("1d_to_1w"), 90: BANDS.index("3m_to_4m"), 365: BANDS.index("1y_to_18m")}
 STOCK = "supply"
 SPENDING = "transfer_volume_cumulative"
 BASE_DATE = date(2009, 1, 1)
@@ -36,7 +36,7 @@ def read(url):
 
 
 def ids(kind):
-    bands = BANDS if kind == STOCK else BANDS[THRESHOLDS[90]:]
+    bands = BANDS if kind == STOCK else BANDS[min(THRESHOLDS.values()):]
     return [f"age_{band}_{kind}" for band in bands]
 
 
@@ -50,7 +50,7 @@ def load(index, start, end, names):
             raise ValueError("Incomplete response to bulk request")
         out = {}
         for key, row in zip(keys, result, strict=True):
-            expected = {"timestamp": "Timestamp", "first_height": "Height"}.get(key, "Bitcoin")
+            expected = {"timestamp": "Timestamp", "first_height": "Height", "utxo_count": "Count"}.get(key, "Bitcoin")
             if (row["index"], row["type"], row["start"], row["end"]) != (index, expected, start, end):
                 raise ValueError(f"Unexpected index, units or coverage for {key}")
             values = row["data"]
@@ -78,7 +78,7 @@ def build(now):
     if count < 2:
         raise ValueError("Insufficient closed months")
     latest_observation = (stop - timedelta(days=1)).isoformat()
-    series_ids = ["timestamp", "circulating_supply", SPENDING, *ids(STOCK), *ids(SPENDING)]
+    series_ids = ["timestamp", "circulating_supply", "utxo_count", SPENDING, *ids(STOCK), *ids(SPENDING)]
     monthly = load("month1", 0, count, series_ids)
     audit_index = count - 1
     audit_month = datetime.fromtimestamp(monthly["timestamp"][audit_index], UTC).date()
@@ -125,6 +125,7 @@ def build(now):
         samples.append({"thresholdDays": days, "month": flows[-1][0],
                         "daysSummed": day_end - day_start - 1, "flowBTC": flows[-1][1],
                         "stockBTC": stocks[-1][1], "unspentSupplyBTC": float(daily["circulating_supply"][-1])})
+        age = f"{days} day" if days == 1 else f"{days} days"
         for prefix, label, kind, unit, points, method in [
             ("inactive", "Inactive supply", "stock", "BTC", stocks,
              "Sum of BTC in unspent outputs at the final indexed block of the calendar month."),
@@ -136,15 +137,34 @@ def build(now):
              "Includes change-related spending, self-transfers and consolidations.")]:
             output.append({"dashboard": "inactive", "asset": "btc", "name": "Bitcoin", "network": "Bitcoin",
                 "contract": None, "symbol": "BTC", "frequency": "1mo", "lastObservation": latest_observation,
-                "metric": f"{prefix}_{days}d", "label": f"{label} ≥ {days} days",
+                "metric": f"{prefix}_{days}d", "label": f"{label} ≥ {age}",
                 "thresholdDays": days, "kind": kind, "unit": unit, "comparison": None,
-                "scope": f"Bitcoin UTXOs aged at least {days} days. Age runs from creation on the running maximum of block-header timestamps.",
+                "scope": f"Bitcoin UTXOs aged at least {age}. Age runs from creation on the running maximum of block-header timestamps.",
                 "method": method, "source": "Bitview (bitview.space)", "sourceUrl": "https://bitview.space",
                 "license": "CC BY 4.0", "licenseUrl": LICENSE, "points": points})
+    counts = monthly["utxo_count"]
+    if any(type(n) is not int for n in counts):
+        raise ValueError("Fractional UTXO count")
+    output.append({"dashboard": "history", "asset": "btc", "name": "Bitcoin", "network": "Bitcoin",
+                   "symbol": "BTC", "frequency": "1mo", "lastObservation": latest_observation,
+                   "metric": "utxo_count", "label": "Unspent transaction outputs", "kind": "stock", "unit": "UTXO",
+                   "comparison": None, "contract": None, "source": "Bitview (bitview.space)",
+                   "sourceUrl": API + "/utxo_count", "license": "CC BY 4.0", "licenseUrl": LICENSE,
+                   "scope": "Bitcoin Core UTXO set, including zero-value outputs.",
+                   "scopeI18n": {"it": "Insieme degli UTXO Bitcoin Core, inclusi gli output a valore zero.",
+                                 "fr": "Ensemble des UTXO Bitcoin Core, y compris les sorties de valeur nulle.",
+                                 "de": "UTXO-Menge von Bitcoin Core, einschließlich Outputs mit Wert null."},
+                   "method": "Stock after the last block in the month. Outputs Core classifies as unspendable are excluded.",
+                   "methodI18n": {"it": "Conteggio dopo l’ultimo blocco del mese. Esclude gli output che Core classifica come non spendibili.",
+                                  "fr": "Effectif après le dernier bloc du mois. Les sorties classées indépensables par Core sont exclues.",
+                                  "de": "Bestand nach dem letzten Block des Monats. Von Core als unausgebbar eingestufte Outputs sind ausgeschlossen."},
+                   "points": [[datetime.fromtimestamp(ts, UTC).strftime("%Y-%m"), value]
+                              for ts, value in zip(monthly["timestamp"], counts, strict=True)]})
     volume, volume_check = gross_input_volume(monthly, count, latest_observation)
     output.append(volume)
     return {"series": output, "unavailable": [], "verification": samples,
             "terms": "https://bitview.space/terms/", "upstreamSeries": series_ids,
+            "acquiredAt": now.isoformat(), "lastDayUtxoCount": daily["utxo_count"][-1],
             "upstreamFirstOpenMonth": latest_bucket.isoformat(), "grossInputVolumeCheck": volume_check}
 
 

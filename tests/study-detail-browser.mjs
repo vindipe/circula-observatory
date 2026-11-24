@@ -1,0 +1,108 @@
+import assert from 'node:assert/strict'
+import { existsSync } from 'node:fs'
+import { readFile, mkdir } from 'node:fs/promises'
+import { chromium } from 'playwright'
+
+const base = process.env.OBSERVATORY_URL || 'http://127.0.0.1:8787'
+const executablePath = process.env.CHROMIUM_PATH || (existsSync('/usr/bin/chromium') ? '/usr/bin/chromium' : undefined)
+const browser = await chromium.launch({executablePath,args:['--no-sandbox']})
+const fmt = (n, lang='en', maximumFractionDigits=2) => new Intl.NumberFormat(lang,{maximumFractionDigits}).format(n)
+const snapshots = {}
+for (const kind of ['frozen','current']) snapshots[kind] = JSON.parse(await readFile('public/atlas/study-'+kind+'.json','utf8'))
+const href = values => new URL('/?'+new URLSearchParams({view:'indicator',asset:'btc',metric:'inactiveFloor',...values}),base).href
+const param = (page,key) => new URL(page.url()).searchParams.get(key)
+
+try {
+  await mkdir('.cache/screenshots',{recursive:true})
+  const desktop = await browser.newContext({viewport:{width:1440,height:1000},acceptDownloads:true})
+  const page = await desktop.newPage()
+  const errors = [], dataRequests=[]
+  page.on('pageerror',e=>errors.push(e.message))
+  page.on('request',r=>{if(r.url().includes('/atlas/study-')) dataRequests.push(r.url())})
+  page.setDefaultTimeout(14000)
+  await page.goto(href({sample:'frozen',lang:'it'}))
+  const target=page.locator('.di-observed')
+  await target.waitFor()
+  assert.ok((await target.innerText()).includes(fmt(snapshots.frozen.assets.btc.latest.inactiveFloor.value,'it')))
+  assert.ok((await page.locator('.di-calculation').innerText()).includes('55.225.893'))
+  assert.equal(await page.locator('#detail-companions thead a').count(),3)
+  const slider=page.locator('#detail-plot [role=slider]')
+  await slider.focus()
+  assert.match(await page.locator('.at-plot-tooltip').innerText(),/zero è inconcludente/)
+  await slider.press('Home')
+  assert.equal(await page.locator('#study-point').inputValue(),'2019-12-31')
+  assert.ok((await target.innerText()).includes(fmt(snapshots.frozen.assets.btc.baseline.inactiveFloor.value,'it')))
+  await slider.press('End')
+  assert.equal(param(page,'month'),'2025-12')
+  assert.match(await page.locator('.a-rule-panel').innerText(),/regol[ae]|protocollo/i)
+  await page.evaluate(()=>document.fonts.ready)
+  await page.screenshot({path:'.cache/screenshots/atlas-study-detail-desktop.png',animations:'disabled'})
+  const before=dataRequests.length
+  await page.locator('#study-sample').selectOption('current')
+  assert.equal(await page.locator('#study-point').inputValue(),snapshots.current.cutoffUtc)
+  const latest=snapshots.current.assets.btc.latest.inactiveFloor
+  assert.ok((await target.innerText()).includes(fmt(latest.value,'it')))
+  assert.ok((await page.locator('.di-calculation').innerText()).includes(fmt(latest.inputs.AdrActCntSum30d,'it')))
+  assert.equal(dataRequests.length,before)
+  console.log('PASS frozen and current bound, underlying observations, keyboard, tooltip, holdings cohort, cached switch')
+
+  await page.goto(href({sample:'custom',metric:'transactions',baseline:'2024-02-29',cutoff:'2025-12-31'}))
+  await page.locator('#study-from').waitFor()
+  assert.equal(await page.locator('#study-from').inputValue(),'2024-02')
+  assert.equal(await page.locator('#study-to').inputValue(),'2025-12')
+  assert.equal(await page.locator('#study-point option').count(),23)
+  const input=page.locator('#study-compare')
+  await input.fill('ltc')
+  await input.press('Tab')
+  assert.equal(param(page,'compare'),'ltc')
+  assert.equal(await page.locator('#detail-plot .at-plot-key').count(),2)
+  await page.locator('#detail-plot [data-view="table"]').click()
+  const download=page.waitForEvent('download')
+  await page.locator('#detail-plot [data-export]').click()
+  const csv=await readFile(await (await download).path(),'utf8')
+  const lines=csv.trimEnd().split('\r\n')
+  assert.equal(lines.length,47)
+  assert.ok(lines[0].includes('"source_codes","formula","canonical_unit","value"'))
+  const resolve=await page.locator('#detail-plot tbody tr').first().locator('td').allTextContents()
+  for(const [i,id] of ['btc','ltc'].entries()) {
+    const record=lines.find(row=>row.startsWith('"2025-12-31",')&&row.includes(',"'+id+'","network"'))
+    assert.ok(record?.includes(',"transactions","'+Number(resolve[i].replaceAll(',',''))+'","observed"'))
+  }
+  const returnLink=new URL(await page.locator('#indicator-detail .a-bottom a').getAttribute('href'),base)
+  assert.equal(returnLink.searchParams.get('sample'),'custom')
+  assert.equal(returnLink.searchParams.get('baseline'),'2024-02-29')
+  assert.equal(returnLink.searchParams.get('cutoff'),'2025-12-31')
+  const shared=page.url()
+  await page.goto(shared)
+  await page.locator('#detail-plot tbody tr').first().waitFor()
+  assert.equal(await page.locator('.di-reading').count(),2)
+  console.log('PASS common interval, BTC/LTC comparison, table/CSV equality, custom matrix round trip, shared URL')
+
+  await page.goto(href({asset:'usdc_eth',metric:'blocks',sample:'frozen'}))
+  await page.locator('.di-scope a').waitFor()
+  assert.match(await page.locator('.di-status').innerText(),/Not applicable/)
+  assert.match(await page.locator('.di-note').first().innerText(),/shared by all deployments/)
+  await page.locator('.di-scope a').press('Enter')
+  await page.getByRole('heading',{name:'Recorded blocks',level:1}).waitFor()
+  assert.equal(param(page,'asset'),'eth')
+  assert.equal(param(page,'metric'),'blocks')
+  await page.goto(href({sample:'frozen',metric:'exchangeValue'}))
+  await page.locator('.di-raw').waitFor()
+  assert.match(await page.locator('.di-raw').innerText(),/USD per native unit at 2025-12-31/)
+  assert.ok((await page.locator('.di-raw').innerText()).includes(fmt(snapshots.frozen.assets.btc.latest.exchangeValue.inputs.PriceUSD,'en',8)))
+  console.log('PASS token links to shared host block history; exchange custody price and valuation')
+
+  const phone=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true})
+  const mobile=await phone.newPage()
+  await mobile.goto(href({lang:'it',sample:'frozen'}))
+  await mobile.locator('#study-point').waitFor()
+  await mobile.locator('#detail-plot [role=slider]').tap({position:{x:3,y:30}})
+  assert.equal(await mobile.locator('#study-point').inputValue(),'2019-12-31')
+  assert.equal(await mobile.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true)
+  await mobile.locator('.di-scope').evaluate(node=>node.scrollIntoView({block:'start'}))
+  await mobile.screenshot({path:'.cache/screenshots/atlas-study-detail-mobile.png',animations:'disabled'})
+  assert.deepEqual(errors,[])
+  console.log('PASS touch point inspection, mobile viewport and desktop/mobile Italian screenshots')
+} finally {
+  await browser.close()
+}

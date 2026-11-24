@@ -1,6 +1,6 @@
 # CIRCULA Observatory
 
-Explore how digital resources accumulate, persist, circulate and expire.
+Explore how blockchain resources accumulate, persist, circulate and expire.
 
 The Observatory is an independent CIRCULA research prototype. Its public catalog combines EVM networks, Coin Metrics assets, tracked Stellar protocols and selected Wikimedia projects. The Explorer starts with subjects that have recorded observations. The full catalog includes subjects that have only reference metadata.
 
@@ -12,7 +12,7 @@ The Observatory is an independent CIRCULA research prototype. Its public catalog
 
 ## Persistence atlas preview
 
-The atlas opens at the root URL and serves monthly snapshots from static Worker assets. The resource navigator links to History Growth, Inactive Holdings, Holding Concentration, Expiration & Renewal and Circulation. Data Coverage also lists end-of-month supply and positive-address counts. The archived entity and catalog endpoints keep their existing routes.
+The atlas starts with the persistent resource and links to a measurement, its source and the conditions under which it can be compared. The [study matrix](docs/study-explorer.md) covers the paper's frozen comparison, the latest complete UTC month, and any pair of published month-ends. Each edition includes partial and unclassified provider IDs. The static Worker serves charts and CSV exports without querying D1. The older catalog and API remain available under their original routes.
 
 Use `npm run dev` for the atlas alone. For an offline copy, run `node scripts/pack-atlas.mjs CIRCULA-Observatory.html` after installing dependencies. The resulting HTML includes the charts, source metadata, methods, data and exports. Each dataset retains its own license.
 

@@ -30,6 +30,10 @@ export interface PlotOptions {
   bars?: boolean
   table?: boolean
   selected?: string
+  sampleMonths?: string[]
+  tooltipNote?: string
+  displayFractionDigits?: number
+  onExport?: (months: string[], visible: number[]) => void
   onInspect?: (month: string) => void
   onViewChange?: (table: boolean) => void
 }
@@ -106,11 +110,14 @@ export function mountPlot(root: HTMLElement, series: AtlasSeries[], options: Plo
   const tr = translations[lang as keyof typeof translations] ?? translations.en
   const locale = lang in translations ? lang : 'en'
   const readable = new Intl.NumberFormat(locale,{ maximumSignificantDigits:21 })
+  const display = options.displayFractionDigits === undefined ? readable : new Intl.NumberFormat(locale,{maximumFractionDigits:options.displayFractionDigits})
   const axis = new Intl.NumberFormat(locale,{ notation:'compact', maximumSignificantDigits:3 })
   const date = new Intl.DateTimeFormat(locale,{month:'short', year:'numeric', timeZone:'UTC'})
   const formatMonth = (m: string) => date.format(new Date(m + '-01T00:00:00Z'))
   const name = (s: AtlasSeries) => s.name || s.asset.toUpperCase()
-  const rows = plotRows(series, options.from, options.to)
+  const allRows = plotRows(series, options.from, options.to)
+  const sampleMonths = options.sampleMonths && new Set(options.sampleMonths)
+  const rows = sampleMonths ? allRows.filter(row => sampleMonths.has(row.month)) : allRows
   const compatible = compatibleSeries(series)
   if (!rows.some(r => r.values.some(v => v !== null))) {
     root.innerHTML = `<section class="at-plot"><h3>${esc(options.title)}</h3><p role="status">${compatible ? tr.none : tr.incompatible}</p></section>`
@@ -163,7 +170,7 @@ export function mountPlot(root: HTMLElement, series: AtlasSeries[], options: Plo
     const row = rows[i], ids = active()
     const values = ids.map(j => {
       const v = row.values[j]
-      return v === null ? tr.missing : readable.format(v) + ' ' + series[j].unit
+      return v === null ? tr.missing : display.format(v) + ' ' + series[j].unit
     })
     cursor.style.left = (frac(i)*100) + '%'
     cursor.innerHTML = ids.map(j => {
@@ -173,11 +180,11 @@ export function mountPlot(root: HTMLElement, series: AtlasSeries[], options: Plo
     cursor.querySelectorAll<HTMLElement>('[data-y]').forEach(dot => dot.style.top = Number(dot.dataset.y)/height*100 + '%')
     const label = formatMonth(row.month)
     canvas.setAttribute('aria-valuenow',String(i))
-    canvas.setAttribute('aria-valuetext',[label, ...ids.map((j,k) => name(series[j]) + ' ' + values[k])].join(', '))
+    canvas.setAttribute('aria-valuetext',[label, ...ids.map((j,k) => name(series[j]) + ' ' + values[k]), options.tooltipNote].filter(Boolean).join(', '))
     const measurements = ids.map((j,k) => `<span ${style(j)}><i></i>${ids.length > 1 ? esc(name(series[j])) + ' ' : ''}<b>${esc(values[k])}</b></span>`).join('')
     readout.innerHTML = `<time datetime="${row.month}">${esc(label)}</time>${measurements}`
     if (popup) {
-      tip.innerHTML = `<strong>${esc(label)}</strong>${measurements}`
+      tip.innerHTML = `<strong>${esc(label)}</strong>${measurements}${options.tooltipNote ? `<small class="at-plot-annotation">${esc(options.tooltipNote)}</small>` : ''}`
       tip.hidden = false
       const w = canvas.clientWidth, tw = tip.offsetWidth
       const offset = frac(i)*w + (frac(i) >= .55 ? -tw-12 : 12)
@@ -288,6 +295,10 @@ export function mountPlot(root: HTMLElement, series: AtlasSeries[], options: Plo
     if (table) drawTable()
   }))
   root.querySelector<HTMLButtonElement>('[data-export]')?.addEventListener('click', () => {
+    if (options.onExport) {
+      options.onExport(rows.map(row => row.month), active())
+      return
+    }
     const link = document.createElement('a')
     link.href = URL.createObjectURL(new Blob([plotCSV(series,rows,active())],{type:'text/csv;charset=utf-8'}))
     const assets = active().map(i => series[i].asset).join('-')

@@ -1,6 +1,7 @@
 import { langs, type Lang } from './copy'
 import type { Series } from './data'
 const names:Record<string,string[]> = {
+ utxo_count:['Unspent transaction outputs','Output di transazione non spesi','Sorties de transaction non dépensées','Nicht ausgegebene Transaktionsoutputs'],
  gross_input_volume_btc:['Gross spent-input value','Valore lordo degli input spesi','Valeur brute des entrées dépensées','Bruttowert ausgegebener Inputs'],
  history_gb:['Cumulative block history','Storico cumulato dei blocchi','Historique cumulé des blocs','Kumulierte Blockhistorie'],
  added_gb:['Block bytes added per month','GB aggiunti ogni mese','Octets ajoutés par mois','Monatlich hinzugefügte Blockbytes'],
@@ -18,7 +19,8 @@ const names:Record<string,string[]> = {
 export function label(s:Series,l:Lang){
  const age=s.metric.match(/^(inactive_pct|inactive|revived)_(\d+)d$/)
  if(age){const prefix=({inactive_pct:['Inactive supply share','Quota di offerta inattiva','Part de l’offre inactive','Inaktiver Anteil'],inactive:['Inactive supply','Offerta inattiva','Offre inactive','Inaktive Menge'],revived:['Older inputs spent','Input anziani spesi','Entrées anciennes dépensées','Ausgegebene ältere Inputs']} as Record<string,string[]>)[age[1]]
- return prefix[langs.indexOf(l)]+' ≥ '+age[2]+' '+['days','giorni','jours','Tage'][langs.indexOf(l)]}
+ const words=age[2]==='1'?['day','giorno','jour','Tag']:['days','giorni','jours','Tage']
+ return prefix[langs.indexOf(l)]+' ≥ '+age[2]+' '+words[langs.indexOf(l)]}
  return names[s.metric]?.[langs.indexOf(l)]||s.label
 }
 export function gaps(l:Lang):[string,string][]{
@@ -46,6 +48,6 @@ export function methodText(s:Series,l:Lang){
 export function scopeText(s:Series,l:Lang){
  if(s.scopeI18n?.[l])return s.scopeI18n[l]
  const age=s.metric.match(/^(?:inactive_pct|inactive|revived)_(\d+)d$/)?.[1]
- if(age && l!=='en')return {it:`UTXO Bitcoin di almeno ${age} giorni. L’età decorre dalla creazione usando il massimo progressivo dei timestamp delle intestazioni dei blocchi.`,fr:`UTXO Bitcoin âgés d’au moins ${age} jours. L’âge est mesuré depuis la création à partir du maximum courant des horodatages des en-têtes de bloc.`,de:`Bitcoin-UTXOs mit einem Alter von mindestens ${age} Tagen. Das Alter seit Erstellung folgt dem fortlaufenden Maximum der Zeitstempel der Blockheader.`}[l]
+ if(age && l!=='en')return {it:`UTXO Bitcoin di almeno ${age} ${age==='1'?'giorno':'giorni'}. L’età decorre dalla creazione usando il massimo progressivo dei timestamp delle intestazioni dei blocchi.`,fr:`UTXO Bitcoin âgés d’au moins ${age} ${age==='1'?'jour':'jours'}. L’âge est mesuré depuis la création à partir du maximum courant des horodatages des en-têtes de bloc.`,de:`Bitcoin-UTXOs mit einem Alter von mindestens ${age} ${age==='1'?'Tag':'Tagen'}. Das Alter seit Erstellung folgt dem fortlaufenden Maximum der Zeitstempel der Blockheader.`}[l]
  return s.scope
 }

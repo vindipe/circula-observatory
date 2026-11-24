@@ -1,12 +1,12 @@
 # Bitcoin inactive holdings
 
-The publication contains monthly unspent BTC, its percentage of circulating UTXO value, and gross BTC spent during each month. Both thresholds use fixed elapsed time, 90 and 365 days. Bitview measures output age from creation using the running maximum of block-header timestamps. No address clustering or beneficial-owner inference enters these measures. A transaction creating change, consolidating outputs, or moving funds to another wallet controlled by the same party can spend an old output.
+The publication contains monthly unspent BTC, its percentage of circulating UTXO value, and gross BTC spent during each month. The age thresholds use 1, 90 and 365 elapsed days. Bitview measures output age from creation using the running maximum of block-header timestamps. No address clustering or beneficial-owner inference enters these measures. A transaction creating change, consolidating outputs, or moving funds to another wallet controlled by the same party can spend an old output.
 
 | Series | Definition |
 | --- | --- |
-| `inactive_90d`, `inactive_365d` | Sum of BTC in the disjoint UTXO age bands meeting the threshold at the final indexed block of the month. |
-| `inactive_pct_90d`, `inactive_pct_365d` | 100 × eligible BTC / all circulating UTXO BTC at that same block. Core excludes outputs known to be unspendable from the UTXO set. |
-| `revived_90d`, `revived_365d` | Change across consecutive month ends in cumulative spent-output BTC for those age bands. An output is assigned its age at spending. The pre-genesis baseline is zero. |
+| `inactive_1d`, `inactive_90d`, `inactive_365d` | Sum of BTC in the disjoint UTXO age bands meeting the threshold at the final indexed block of the month. |
+| `inactive_pct_1d`, `inactive_pct_90d`, `inactive_pct_365d` | 100 × eligible BTC / all circulating UTXO BTC at that same block. Core excludes outputs known to be unspendable from the UTXO set. |
+| `revived_1d`, `revived_90d`, `revived_365d` | Change across consecutive month ends in cumulative spent-output BTC for those age bands. An output is assigned its age at spending. The pre-genesis baseline is zero. |
 
 The same snapshot supplies the Circulation dashboard with `gross_input_volume_btc`. Its denominator-free flow sums all input value spent in non-coinbase Bitcoin transactions each month. The amount equals the transaction outputs plus fees. It includes change, transfers back to the same owner, consolidations and repeated spending of the same BTC. Expanding this measure to other networks requires a compatible definition. [Provider definition](https://bitview.space/api/series/transfer_volume_cumulative)
 
@@ -20,12 +20,14 @@ Run `python3 scripts/holdings.py` from the repository or supply `--output PATH` 
 
 The program checks every monthly timestamp and every component’s coverage, units and non-negativity. It reconciles all 23 age bands with total UTXO supply each month (rounding tolerance of one satoshi per band). For the latest closed month, it requests a separate daily extraction covering the prior month end and every calendar day. Each band’s two endpoints must agree with the monthly values, and summed daily changes must reproduce gross monthly spending. The snapshot stores those check values. The verification compares two index granularities from the same provider.
 
-| October 2026, month-end or whole month as appropriate | ≥90 days | ≥365 days |
-| --- | ---: | ---: |
-| Unspent BTC | 17,125,511.61559610 | 12,870,855.22309973 |
-| Gross BTC spent | 718,014.00857513 | 334,998.97003598 |
+| October 2026, month-end or whole month as appropriate | ≥1 day | ≥90 days | ≥365 days |
+| --- | ---: | ---: | ---: |
+| Unspent BTC | 19,995,733.75239667 | 17,125,511.61559610 | 12,870,855.22309973 |
+| Gross BTC spent | 3,501,743.24372614 | 718,014.00857513 | 334,998.97003598 |
 
-The denominator on that date was 20,106,151.11551729 BTC.
+The denominator on that date was 20,106,151.11551729 BTC. In the one-day series Bitview supplies Bitcoin UTXO cohorts directly. The original proposal estimates one-day inactivity by subtracting Coin Metrics active supply from current supply. These estimates have separate identifiers and provenance.
+
+The Infrastructure dashboard also publishes Bitview’s `utxo_count`, a distinct month-end stock in units of UTXOs. It includes zero-value outputs and excludes outputs Bitcoin Core classifies as unspendable. The 31 October daily extraction matched the month-end stock of 164,160,988 UTXOs. This counts entries and does not measure live-state bytes. [Definition](https://bitview.space/api/series/utxo_count)
 
 ## Attribution and reproducibility links
 

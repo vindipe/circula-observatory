@@ -27,6 +27,7 @@ jobs:
           key: atlas-inputs-${{ steps.cutoff.outputs.month }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: atlas-inputs-${{ steps.cutoff.outputs.month }}-
       - run: python3 -B scripts/refresh-atlas.py
+      - run: python3 -B scripts/refresh-study.py
       - uses: actions/cache/save@v4
         if: success() || failure()
         with:
@@ -39,5 +40,7 @@ jobs:
           path: |
             public/atlas/current.json
             public/atlas/releases/
+            public/atlas/study-release.json
+            public/atlas/study-releases/
             .cache/monthly/CIRCULA-Observatory.html
           include-hidden-files: true

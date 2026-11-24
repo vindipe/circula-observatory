@@ -27,7 +27,11 @@ jobs:
             if curl -fsS http://127.0.0.1:4173/ > /dev/null; then break; fi
             sleep 1
           done
-          CHROMIUM_PATH="$(node --input-type=module -e "import {chromium} from 'playwright'; console.log(chromium.executablePath())")" OBSERVATORY_URL=http://127.0.0.1:4173 npm run test:atlas-browser
+          export CHROMIUM_PATH="$(node --input-type=module -e "import {chromium} from 'playwright'; console.log(chromium.executablePath())")"
+          export OBSERVATORY_URL=http://127.0.0.1:4173
+          npm run test:atlas-browser
+          node tests/study-matrix-browser.mjs
+          node tests/study-detail-browser.mjs
       - run: node scripts/pack-atlas.mjs .cache/screenshots/CIRCULA-Observatory.html
       - run: node tests/atlas-offline.test.mjs .cache/screenshots/CIRCULA-Observatory.html
       - uses: actions/upload-artifact@v4
