@@ -4,7 +4,7 @@ import { build } from 'esbuild'
 import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import { basename, dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { gzipSync } from 'node:zlib'
+import { gzipSync, gunzipSync } from 'node:zlib'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
 const output = process.argv[2]
@@ -47,7 +47,11 @@ async function embedSnapshot() {
     study[key] = JSON.parse(await readFile(join(publicDir, file), 'utf8'))
   }
   if (study.current.cutoffUtc !== study.series.cutoffUtc) throw Error('Mismatched study cutoffs')
-  const payload = {atlas:Object.fromEntries(entries),samples:{current:study.current,frozen:study.frozen},months:study.series}
+  const [audit,data] = await Promise.all(['audit','series'].map(async key =>
+    JSON.parse(gunzipSync(await readFile(join(publicDir, 'atlas/indicator-' + key + '.json.gz'))))))
+  if (audit.cutoff !== data.cutoff || audit.asOf !== data.asOf) throw Error('Mismatched indicator catalogue cutoffs')
+  const payload = {atlas:Object.fromEntries(entries),samples:{current:study.current,frozen:study.frozen},months:study.series,
+    indicatorCatalogue:{audit,data}}
   return gzipSync(Buffer.from(JSON.stringify(payload)), {level:9}).toString('base64')
 }
 
@@ -135,6 +139,7 @@ const payload = await new Response(stream).json();
 window.__atlas = payload.atlas;
 window.__studySnapshots = payload.samples;
 window.__studyMonths = payload.months;
+window.__indicatorCatalogue = payload.indicatorCatalogue;
 document.getElementById('atlas-snapshot').remove();
 ${offlineRouter}
 ${js.replace(/<\/script/gi,'<\\/script')}

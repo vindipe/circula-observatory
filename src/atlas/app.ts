@@ -20,6 +20,7 @@ import { rulePanel } from './rules'
 import { loadStudy } from './study-data'
 import { loadStudyMonths } from './study-months'
 import type { ResearchSnapshot } from './study-types'
+import { catalogText } from './catalog-copy'
 
 const root=document.querySelector<HTMLElement>('#app')!
 const previewTopics=topics.slice(0,5)
@@ -53,9 +54,9 @@ function shell(page:string,body:string){
  const skip=document.querySelector<HTMLAnchorElement>('.skip')
  if(skip) skip.textContent=t('skip')
  const navLink=(id:string,name:string)=>link({view:id==='home'?'':id},name,'nav-link '+(page===id?'current':''))
- root.innerHTML=`<header class="a-header"><div class="a-bar"><a data-atlas class="a-brand" href="${esc(url({}))}">${logo}<span>CIRCULA<small>Observatory</small></span></a><nav aria-label="${t('atlas')}">${navLink('home',t('atlas'))}${navLink('matrix',t('matrix'))}<details class="a-menu"><summary class="nav-link ${topics.some(x=>x.id===page)?'current':''}">${t('dashboards')} <span aria-hidden="true">⌄</span></summary><div>${link({view:'indicator',asset:'btc',metric:'transactions'},t('studyLink'))}${topics.map(x=>link(deep(x.id,primary(x.id)),t(x.id))).join('')}</div></details>${navLink('coverage',t('coverage'))}</nav><label class="a-lang"><span aria-hidden="true">◎</span><select aria-label="Language / Lingua / Langue / Sprache" id="locale">${langs.map(a=>option(a,a.toUpperCase(),l)).join('')}</select></label></div></header><main id="main" class="a-main" tabindex="-1">${body}</main><footer class="a-footer"><span>CIRCULA Observatory</span><a href="https://circula.unine.ch/" target="_blank" rel="noreferrer">CIRCULA · Université de Neuchâtel ↗</a><a href="https://github.com/vindipe/circula-observatory" target="_blank" rel="noreferrer">GitHub ↗</a></footer>`
+ root.innerHTML=`<header class="a-header"><div class="a-bar"><a data-atlas class="a-brand" href="${esc(url({}))}">${logo}<span>CIRCULA<small>Observatory</small></span></a><nav aria-label="${t('atlas')}">${navLink('home',t('atlas'))}${navLink('catalogue',catalogText(l,'catalogue'))}${navLink('matrix',t('matrix'))}<details class="a-menu"><summary class="nav-link ${topics.some(x=>x.id===page)?'current':''}">${t('dashboards')} <span aria-hidden="true">⌄</span></summary><div>${link({view:'indicator',asset:'btc',metric:'transactions'},t('studyLink'))}${topics.map(x=>link(deep(x.id,primary(x.id)),t(x.id))).join('')}</div></details>${navLink('coverage',t('coverage'))}</nav><label class="a-lang"><span aria-hidden="true">◎</span><select aria-label="Language / Lingua / Langue / Sprache" id="locale">${langs.map(a=>option(a,a.toUpperCase(),l)).join('')}</select></label></div></header><main id="main" class="a-main" tabindex="-1">${body}</main><footer class="a-footer"><span>CIRCULA Observatory</span><a href="https://circula.unine.ch/" target="_blank" rel="noreferrer">CIRCULA · Université de Neuchâtel ↗</a><a href="https://github.com/vindipe/circula-observatory" target="_blank" rel="noreferrer">GitHub ↗</a></footer>`
  ;root.querySelector<HTMLElement>('#locale')!.onchange=e=>nav({lang:(e.target as HTMLSelectElement).value},true)
- document.title=(page==='home'?t('title'):t(page as Key))+' · CIRCULA Observatory'
+ document.title=(page==='home'?t('title'):page==='catalogue'?catalogText(l,'heading'):t(page as Key))+' · CIRCULA Observatory'
 }
 function evidence(s:Series){
  const first=s.points[0][0],last=s.points.at(-1)![0]
@@ -81,7 +82,7 @@ function home(){
  const mobile=`<label class="a-mobile-resource">${t('resource')}<select id="resource-select">${resourcePaths.map(x=>option(x.id,t(x.resource)+' → '+t(x.measure),path.id)).join('')}</select></label>`
  shell('home',`<section class="a-hero"><div class="a-hero-intro"><h1>${t('title')}<em>.</em></h1><p class="a-tagline">${t('intro')}</p><div class="a-research"><span class="a-micro">${t('researchLabel')}</span><p>${t('research')}</p></div></div>${mobile}<div class="a-feature"><div class="a-feature-heading"><span class="a-micro"><b class="a-dot"></b> ${t(path.area)} / ${t(path.measure)}</span><span class="a-ticker">${esc(path.target.asset.toUpperCase())}</span></div>${val!==undefined?`<div class="a-number">${fmt.format(val)} <small>${esc(unit)}</small></div><p class="a-caption">${latest?esc(latest.date)+' UTC':formatMonth(last![0])} · ${s?esc(label(s,lang())):t(path.measure)}</p>`:''}<div id="home-chart"></div><div class="a-feature-foot"><div><p>${t(path.question)}</p><small>${source}</small></div>${link(path.target,t('open')+' '+arrow,'a-button')}</div>${path.id==='history'?`<details class="a-home-source"><summary>${t('methods')}</summary><p>${t('paperLimit')}</p></details>`:''}</div></section>
  <section id="resources" class="a-navigator"><div class="a-sectionhead"><div><div class="a-path"><span>${t('persistence')}</span><i>→</i><span>${t('resources')}</span><i>→</i><span>${t('phenomena')}</span></div><h2>${t('navigate')}</h2></div><p>${t('choose')}</p></div><div class="a-resource-list">${resourceButtons}</div></section>
- <section class="a-study-entry"><div><h2>${t('studyEntry')}</h2><p>${t('studyLead')}</p></div><div>${link({view:'matrix',sample:'frozen'},'<strong>'+t('frozenStudy')+'</strong><small>2019-12-31 → 2025-12-31</small>'+arrow,'a-study-route')}${link({view:'matrix',sample:'current'},'<strong>'+t('latestStudy')+'</strong>'+arrow,'a-study-route')}</div></section>
+ <section class="a-study-entry"><div><h2>${t('studyEntry')}</h2><p>${t('studyLead')}</p></div><div>${link({view:'matrix',sample:'frozen'},'<strong>'+t('frozenStudy')+'</strong><small>2019-12-31 → 2025-12-31</small>'+arrow,'a-study-route')}${link({view:'matrix',sample:'current'},'<strong>'+t('latestStudy')+'</strong>'+arrow,'a-study-route')}${link({view:'catalogue'},'<strong>'+catalogText(lang(),'home')+'</strong>'+arrow,'a-study-route')}</div></section>
  <section class="a-index"><div class="a-sectionhead"><h2>${t('look')}</h2>${coverageLink()}</div>${previewTopics.filter(x=>x.id!=='circulation').map(x=>link(deep(x.id,primary(x.id)),`<strong>${t(x.id)}</strong><span>${t(x.question)}</span>${arrow}`,'a-index-row')).join('')}</section>`)
  const host=root.querySelector<HTMLElement>('#home-chart')!
  if(path.id==='expiration')mountEvents(host,data.stellar,lang(),true)
@@ -217,6 +218,14 @@ function paint(){
  else if(view==='matrix'){
    shell(view,'<div id="study-matrix"></div>')
    mountMatrix(root.querySelector<HTMLElement>('#study-matrix')!,lang())
+ }else if(view==='catalogue'){
+   shell(view,`<div id="indicator-catalogue" aria-busy="true">${catalogText(lang(),'catalogue')}…</div>`)
+   const host=root.querySelector<HTMLElement>('#indicator-catalogue')!
+   Promise.all([import('./catalogue'),import('./catalog-data').then(module=>module.loadCensus())]).then(([module,census])=>{
+     if(!host.isConnected)return
+     host.removeAttribute('aria-busy')
+     module.mountCatalogue(host,census,lang())
+   }).catch(()=>{if(host.isConnected){host.removeAttribute('aria-busy');host.innerHTML='<p role="alert">'+t('error')+'</p><button>'+t('reset')+'</button>';host.querySelector('button')!.onclick=render}})
  }else if(view==='indicator'){
    shell(view,`<div class="a-bread">${link({},t('atlas'))} / ${link({view:'matrix'},t('matrix'))}</div><div id="indicator-detail" aria-busy="true">${t('indicator')}…</div>`)
    const host=root.querySelector<HTMLElement>('#indicator-detail')!
@@ -246,7 +255,7 @@ function render(){
  const page=get('view')||'home'
  const source=sourceFor[page==='home'?(get('resource')||'history'):page]||'history'
  const studyHome=page==='home'&&resourcePaths.some(x=>x.id===get('resource')&&x.target.view==='indicator')
- const need:Provider[]=(page==='matrix'||studyHome)?[]:page==='indicator'?['community']:page==='coverage'?[...providers]:page==='home'?[source]:[...new Set<Provider>([source,'community',...((page==='circulation'||page==='history'||page==='concentration'||page==='context')?['holdings' as const]:[])])]
+ const need:Provider[]=(page==='matrix'||page==='catalogue'||studyHome)?[]:page==='indicator'?['community']:page==='coverage'?[...providers]:page==='home'?[source]:[...new Set<Provider>([source,'community',...((page==='circulation'||page==='history'||page==='concentration'||page==='context')?['holdings' as const]:[])])]
  function done(){if(id!==drawId)return;root.removeAttribute('aria-busy');series=Object.values(data).flatMap(b=>b.series).filter(s=>s.points?.length);paint();if(pendingFocus){root.querySelector<HTMLElement>(pendingFocus)?.focus({preventScroll:true});pendingFocus=''}}
  if(need.every(k=>data[k])&&(!studyHome||homeSnapshot)){done();return}
  root.setAttribute('aria-busy','true')

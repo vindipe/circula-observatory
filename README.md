@@ -5,6 +5,7 @@ Explore how blockchain resources accumulate, persist, circulate and expire.
 The Observatory is an independent CIRCULA research prototype. Its public catalog combines EVM networks, Coin Metrics assets, tracked Stellar protocols and selected Wikimedia projects. The Explorer starts with subjects that have recorded observations. The full catalog includes subjects that have only reference metadata.
 
 - [Public Observatory](https://circula-observatory.vincenzopaolo-diperna.workers.dev/)
+- [Coin Metrics indicator catalogue and public coverage](docs/indicator-catalogue.md)
 - [Research question and interactive study design](docs/research-design.md)
 - [Source selection, scope and data licenses](docs/sources.md)
 - [Public API and downloads](docs/api.md)
