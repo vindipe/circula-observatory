@@ -1,14 +1,29 @@
 # CIRCULA Observatory
 
-Explore how digital resources accumulate, persist, circulate and expire.
+Explore how blockchain resources accumulate, persist, circulate and expire.
 
 The Observatory is an independent CIRCULA research prototype. Its public catalog combines EVM networks, Coin Metrics assets, tracked Stellar protocols and selected Wikimedia projects. The Explorer starts with subjects that have recorded observations. The full catalog includes subjects that have only reference metadata.
 
 - [Public Observatory](https://circula-observatory.vincenzopaolo-diperna.workers.dev/)
+- [Coin Metrics indicator catalogue and public coverage](docs/indicator-catalogue.md)
 - [Research question and interactive study design](docs/research-design.md)
 - [Source selection, scope and data licenses](docs/sources.md)
 - [Public API and downloads](docs/api.md)
 - [Adding a controlled node adapter](docs/node-adapters.md)
+
+## Persistence atlas preview
+
+The atlas starts with the persistent resource and links to a measurement, its source and the conditions under which it can be compared. The [study matrix](docs/study-explorer.md) covers the paper's frozen comparison, the latest complete UTC month, and any pair of published month-ends. Each edition includes partial and unclassified provider IDs. The static Worker serves charts and CSV exports without querying D1. The older catalog and API remain available under their original routes.
+
+Use `npm run dev` for the atlas alone. For an offline copy, run `node scripts/pack-atlas.mjs CIRCULA-Observatory.html` after installing dependencies. The resulting HTML includes the charts, source metadata, methods, data and exports. Each dataset retains its own license.
+
+- [Monthly refresh, validation and atomic publication](docs/atlas-refresh.md)
+- [Coin Metrics coverage and monthly aggregation](docs/community-snapshots.md)
+- [Bitcoin inactivity and spending cohorts](docs/holdings.md)
+- [Address distribution and available exact ranks](docs/distribution.md)
+- [Event definitions and Stellar sampling](docs/stellar-sampling.md)
+
+The preview configuration is `wrangler.atlas-preview.jsonc`. It serves static assets without a D1 binding. The preview branch runs the browser checks separately from the production Worker.
 
 ## Run locally
 

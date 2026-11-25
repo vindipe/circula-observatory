@@ -1,0 +1,9 @@
+.a-rule-panel { margin-block: 1.5rem; padding: .8rem 1.1rem; border: 1px solid #c6d6ca; background: #f4f8f4; }
+.a-rule-panel summary { cursor: pointer; padding-block: .45rem; font-weight: 650; }
+.a-rule-panel summary:focus-visible, .a-rule-panel a:focus-visible { outline: 2px solid #09714a; outline-offset: 3px; }
+.a-rule-panel p { max-width: 84ch; line-height: 1.5; margin-block: .65rem; }
+.a-rule-panel ul { list-style: none; padding: 0; margin-block: .55rem 1rem; }
+.a-rule-panel li { display: grid; grid-template-columns: minmax(8rem, .2fr) 1fr; gap: 1rem; padding: .85rem 0; border-block-end: 1px solid #d3ded5; }
+.a-rule-panel time, .a-rule-panel small { font-size: .8rem; font-variant-numeric: tabular-nums; }
+.a-rule-panel a { color: #075b40; text-decoration: underline; text-underline-offset: .15em; }
+@media (max-width: 600px) { .a-rule-panel li {grid-template-columns: 1fr; gap: .25rem;} }
